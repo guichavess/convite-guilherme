@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Aniversário do Guilherme — 02.09</title>
+<meta name="description" content="Convite de aniversário. 02 de setembro, Tio Armênio, Shopping Rio Poty.">
+<meta name="theme-color" content="#050b2e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@200;300;400;500&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PALETA / BASE — interface = PS2 (azul profundo, cromo, vidro)
+   ============================================================ */
+:root{
+  --void:#000000;
+  --deep:#050b2e;
+  --blue:#10307a;
+  --glow:#2b6ed9;
+  --cyan:#7ad4ff;
+  --chrome:#dfe8f5;
+  --lily:#b4232c;
+  --line:rgba(160,200,255,.20);
+  --line-hot:rgba(122,212,255,.65);
+  --dim:#8fb1de;
+  --dimmer:#6f93c4;
+  --crt:.16;          /* intensidade das scanlines (reduzida no creator) */
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{
+  background:
+    radial-gradient(120% 80% at 50% 108%, rgba(43,110,217,.50) 0%, rgba(16,48,122,.26) 38%, rgba(0,0,0,0) 72%),
+    radial-gradient(90% 60% at 50% -10%, rgba(43,110,217,.18) 0%, rgba(0,0,0,0) 60%),
+    linear-gradient(178deg, #02061c 0%, var(--deep) 34%, var(--blue) 100%);
+  background-attachment:fixed;
+  color:var(--chrome);
+  font-family:"Barlow",system-ui,-apple-system,sans-serif;
+  font-weight:300;
+  letter-spacing:.035em;
+  -webkit-font-smoothing:antialiased;
+  overflow:hidden;
+  overscroll-behavior:none;
+}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* ---------- caixas flutuantes (browser do PS2) ---------- */
+#cubes{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+#cubes i{
+  position:absolute;display:block;
+  border:1px solid rgba(180,215,255,.26);
+  background:linear-gradient(150deg, rgba(180,215,255,.13), rgba(120,170,255,.02));
+  box-shadow:0 0 22px rgba(90,150,255,.12) inset;
+  animation:drift linear infinite;will-change:transform;
+}
+@keyframes drift{
+  from{transform:translate3d(0,14vh,0) rotate(0deg)}
+  to{transform:translate3d(0,-118vh,0) rotate(190deg)}
+}
+
+/* ---------- CRT ---------- */
+#scan{
+  position:fixed;inset:0;z-index:70;pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0,0,0,var(--crt)) 0 1px, rgba(0,0,0,0) 1px 3px),
+    radial-gradient(120% 90% at 50% 50%, rgba(0,0,0,0) 55%, rgba(0,0,0,.42) 100%);
+  mix-blend-mode:multiply;transition:opacity .5s ease;
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+#boot{
+  position:fixed;inset:0;z-index:90;background:#000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:26px;transition:opacity .7s ease;
+}
+#boot.gone{opacity:0;pointer-events:none}
+.legal{
+  font-size:11px;letter-spacing:.34em;color:#4d6a97;text-align:center;line-height:2.2;
+  opacity:0;transition:opacity .8s ease;
+}
+.towers{display:flex;align-items:flex-end;gap:9px;height:104px}
+.towers b{
+  display:block;width:5px;height:8px;border-radius:1px;
+  background:linear-gradient(to top, rgba(43,110,217,0), #9fd0ff);
+  box-shadow:0 0 14px rgba(120,190,255,.75);
+  transform-origin:bottom;animation:rise 1.5s cubic-bezier(.2,.8,.25,1) forwards;
+}
+@keyframes rise{from{height:6px;opacity:0}to{height:var(--h);opacity:1}}
+.bootlog{
+  position:absolute;left:0;right:0;bottom:88px;text-align:center;
+  font-size:11px;letter-spacing:.26em;color:#5c82b8;line-height:2.1;min-height:66px;
+}
+.bootlog b{display:block;font-weight:400;opacity:0;animation:fadein .5s ease forwards}
+@keyframes fadein{to{opacity:1}}
+.bootname{
+  font-family:"Barlow Condensed",sans-serif;font-weight:200;
+  font-size:clamp(30px,9vw,54px);letter-spacing:.5em;text-indent:.5em;
+  opacity:0;transition:opacity 1.1s ease;
+  background:linear-gradient(180deg,#fff 0%,#d3e2f6 36%,#7b9fcd 51%,#f2f7ff 64%,#93aed0 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 20px rgba(110,170,255,.4));
+}
+.press{
+  font-size:12px;letter-spacing:.42em;color:#a9c9f0;opacity:0;
+  border:0;background:none;cursor:pointer;padding:10px 4px;
+}
+.press.on{animation:blink 1.4s steps(1,end) infinite;opacity:1}
+@keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.15}}
+.skip{
+  position:absolute;bottom:calc(26px + var(--safe-b));right:22px;
+  background:none;border:1px solid var(--line);color:#84a7d6;
+  font-size:11px;letter-spacing:.18em;padding:9px 16px;border-radius:2px;cursor:pointer;
+}
+.skip:hover{border-color:var(--cyan);color:var(--cyan)}
+
+/* ============================================================
+   TELAS
+   ============================================================ */
+.screen{
+  position:fixed;inset:0;z-index:3;display:none;
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+}
+.screen.on{display:block;animation:screenin .45s ease both}
+@keyframes screenin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.wrap{max-width:600px;margin:0 auto;padding:calc(64px + var(--safe-b)) 22px 90px}
+
+/* ---------- barra superior ---------- */
+.top{
+  position:fixed;top:0;left:0;right:0;z-index:20;height:52px;
+  display:flex;align-items:center;gap:14px;padding:0 16px;
+  background:linear-gradient(180deg, rgba(3,9,32,.92), rgba(3,9,32,.35) 70%, rgba(3,9,32,0));
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  pointer-events:none;
+}
+.top>*{pointer-events:auto}
+.back{
+  border:1px solid var(--line);background:rgba(10,26,64,.5);
+  font-size:11px;letter-spacing:.2em;padding:8px 14px;border-radius:2px;cursor:pointer;color:var(--dim);
+}
+.back:hover{border-color:var(--cyan);color:var(--cyan)}
+.top .who{font-family:"Barlow Condensed",sans-serif;font-size:15px;letter-spacing:.34em;color:#93b6e4}
+.top .stamp{margin-left:auto;font-size:10.5px;letter-spacing:.26em;color:#5f83b6}
+
+/* ============================================================
+   MENU PRINCIPAL
+   ============================================================ */
+#menu .wrap{display:flex;flex-direction:column;justify-content:center;min-height:100dvh;padding-top:74px}
+.hero{text-align:center;margin-bottom:32px}
+.hero h1{
+  font-family:"Barlow Condensed",sans-serif;font-weight:200;
+  font-size:clamp(44px,14vw,80px);line-height:.94;margin:0;
+  letter-spacing:.16em;text-indent:.16em;
+  background:linear-gradient(180deg,#fff 0%,#d3e2f6 34%,#7b9fcd 50%,#f2f7ff 63%,#8ea9cc 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 24px rgba(110,170,255,.32));
+}
+.hero .date{font-size:12px;letter-spacing:.44em;color:#8db0e0;margin-top:12px}
+.mlabel{font-size:10.5px;letter-spacing:.34em;color:#5f83b6;margin:0 0 12px 2px}
+.mlist{display:flex;flex-direction:column;gap:2px}
+.mitem{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  border:0;border-left:2px solid transparent;background:none;cursor:pointer;
+  padding:15px 14px;border-radius:2px;transition:background .18s ease,border-color .18s ease;
+}
+.mitem .mk{width:12px;color:var(--cyan);opacity:0;transition:opacity .18s ease;font-size:13px}
+.mitem .mt{font-family:"Barlow Condensed",sans-serif;font-weight:300;font-size:21px;letter-spacing:.24em;color:#cfe0f6}
+.mitem .ms{display:block;font-family:"Barlow",sans-serif;font-size:10.5px;letter-spacing:.2em;color:#6f93c4;margin-top:3px}
+.mitem:hover,.mitem:focus-visible,.mitem.sel{
+  background:linear-gradient(90deg, rgba(122,212,255,.16), rgba(122,212,255,.02));
+  border-left-color:var(--cyan);outline:none;
+}
+.mitem:hover .mk,.mitem:focus-visible .mk,.mitem.sel .mk{opacity:1}
+.mitem .badge{
+  margin-left:auto;font-size:9.5px;letter-spacing:.18em;color:#0a1a3c;
+  background:var(--cyan);padding:3px 7px;border-radius:2px;
+}
+
+/* ============================================================
+   CHARACTER CREATOR
+   ============================================================ */
+#creator{
+  display:none;grid-template-rows:1fr auto;overflow:hidden;
+  background:
+    radial-gradient(80% 55% at 50% 42%, rgba(43,110,217,.30) 0%, rgba(5,11,46,.10) 55%, rgba(0,0,0,0) 78%),
+    radial-gradient(120% 70% at 50% 118%, rgba(43,110,217,.42), rgba(0,0,0,0) 62%),
+    linear-gradient(180deg,#01030f 0%, #03082a 46%, #071444 100%);
+}
+#creator.on{display:grid}
+#studio{position:relative;overflow:hidden;min-height:0}
+#studio canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#studio canvas:active{cursor:grabbing}
+#studio:before{           /* grid fino do showroom */
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    repeating-linear-gradient(90deg, rgba(122,212,255,.055) 0 1px, transparent 1px 78px),
+    repeating-linear-gradient(0deg, rgba(122,212,255,.045) 0 1px, transparent 1px 78px);
+  -webkit-mask-image:radial-gradient(70% 60% at 50% 55%, #000 10%, transparent 78%);
+  mask-image:radial-gradient(70% 60% at 50% 55%, #000 10%, transparent 78%);
+}
+.studio-tag{
+  position:absolute;top:58px;left:18px;pointer-events:none;
+  font-size:10px;letter-spacing:.32em;color:#6f93c4;line-height:2;
+}
+.studio-tag b{display:block;font-family:"Barlow Condensed",sans-serif;font-weight:300;font-size:17px;letter-spacing:.3em;color:#cfe0f6}
+.cam{position:absolute;right:14px;bottom:14px;display:flex;flex-direction:column;gap:7px;z-index:5}
+.cam button{
+  width:44px;height:40px;border:1px solid var(--line);border-radius:2px;
+  background:rgba(8,20,54,.62);color:var(--dim);font-size:11px;letter-spacing:.1em;cursor:pointer;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+.cam button:hover,.cam button[aria-pressed=true]{border-color:var(--cyan);color:var(--cyan)}
+.hint{
+  position:absolute;left:0;right:0;bottom:12px;text-align:center;pointer-events:none;
+  font-size:10px;letter-spacing:.26em;color:#5f83b6;transition:opacity .4s ease;
+}
+
+/* ---------- painel de customização ---------- */
+#panel{
+  border-top:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(6,16,48,.92), rgba(4,10,32,.97));
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;min-height:0;
+}
+.pacts{display:flex;gap:8px;padding:10px 12px calc(12px + var(--safe-b));border-top:1px solid var(--line)}
+.pbtn{
+  flex:1;padding:14px 8px;border-radius:3px;cursor:pointer;border:1px solid var(--line);
+  background:rgba(120,175,255,.07);font-size:11.5px;letter-spacing:.2em;color:#cfe0f6;
+}
+.pbtn:hover{border-color:var(--cyan);background:rgba(122,212,255,.16);color:#fff}
+.pbtn.pri{border-color:rgba(122,212,255,.55);background:linear-gradient(180deg, rgba(122,212,255,.26), rgba(30,80,170,.42));color:#fff}
+
+/* ============================================================
+   CONVITE / DETALHES / RSVP
+   ============================================================ */
+.stage{position:relative;display:flex;justify-content:center;margin:2px 0 4px}
+#portrait{width:min(78vw,300px);height:min(102vw,392px);display:block;touch-action:pan-y;cursor:grab}
+.grab{text-align:center;font-size:10px;letter-spacing:.28em;color:var(--dimmer);margin:6px 0 22px}
+h1.big{
+  font-family:"Barlow Condensed",sans-serif;font-weight:200;
+  font-size:clamp(46px,15vw,86px);line-height:.94;margin:0;
+  letter-spacing:.16em;text-indent:.16em;text-align:center;
+  background:linear-gradient(180deg,#fff 0%,#d3e2f6 34%,#7b9fcd 50%,#f2f7ff 63%,#8ea9cc 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 24px rgba(110,170,255,.32));
+}
+.tagline{text-align:center;font-size:13px;letter-spacing:.3em;color:#9dbde6;margin:16px 0 6px}
+.counter{
+  text-align:center;font-variant-numeric:tabular-nums;
+  font-size:15px;letter-spacing:.22em;color:var(--cyan);margin:0 0 34px;min-height:22px;
+}
+.blocks{display:flex;flex-direction:column;gap:12px;margin:0 0 34px}
+.block{
+  display:flex;align-items:center;gap:16px;padding:16px 17px;border-radius:3px;
+  border:1px solid var(--line);text-decoration:none;color:inherit;
+  background:linear-gradient(120deg, rgba(120,175,255,.11), rgba(20,50,120,.18));
+}
+a.block:hover,a.block:focus-visible{
+  border-color:var(--cyan);
+  background:linear-gradient(120deg, rgba(140,200,255,.20), rgba(30,70,150,.26));
+}
+.chip{
+  flex:0 0 auto;width:32px;height:32px;border-radius:2px;
+  background:linear-gradient(155deg,#cfe4ff,#5f8ed0 55%,#25488c);
+  box-shadow:0 3px 0 rgba(10,25,60,.75), 0 0 16px rgba(120,180,255,.28);
+}
+.chip.red{background:linear-gradient(155deg,#ffc9c4,#c0413f 55%,var(--lily))}
+.block b{display:block;font-weight:400;font-size:15.5px;letter-spacing:.04em}
+.block span{display:block;font-size:11px;letter-spacing:.2em;color:var(--dim);margin-top:5px}
+.arrow{margin-left:auto;color:#7fa5d8;font-size:17px}
+
+.dialog{
+  border:1px solid var(--line);border-radius:4px;overflow:hidden;
+  background:linear-gradient(170deg, rgba(22,58,132,.62), rgba(6,16,46,.82));
+  box-shadow:0 18px 50px rgba(0,0,0,.5);
+}
+.dialog h2{
+  margin:0;padding:15px 20px;font-weight:400;font-size:12.5px;letter-spacing:.24em;
+  color:#bcd6f6;border-bottom:1px solid var(--line);background:rgba(120,175,255,.09);
+}
+.body{padding:20px}
+.body p{margin:0 0 16px;font-size:14px;line-height:1.65;color:#c3d8f4}
+label{display:block;font-size:10.5px;letter-spacing:.22em;color:var(--dim);margin-bottom:8px}
+input[type=text]{
+  width:100%;padding:13px 14px;border-radius:3px;border:1px solid var(--line);
+  background:rgba(2,10,32,.6);color:var(--chrome);font-family:inherit;font-size:16px;letter-spacing:.04em;
+}
+input[type=text]:focus{outline:none;border-color:var(--cyan);box-shadow:0 0 0 3px rgba(122,212,255,.16)}
+.opts{display:flex;gap:12px;margin-top:18px}
+.opt{
+  flex:1;padding:15px 10px;border-radius:3px;cursor:pointer;border:1px solid var(--line);
+  background:rgba(120,175,255,.07);font-size:13.5px;letter-spacing:.14em;
+  transition:background .15s ease,border-color .15s ease;
+}
+.opt:hover{border-color:var(--cyan);background:rgba(122,212,255,.14)}
+.opt[aria-pressed=true]{border-color:var(--cyan);background:rgba(122,212,255,.24);color:#fff}
+.send{
+  width:100%;margin-top:18px;padding:16px;border-radius:3px;cursor:pointer;
+  border:1px solid rgba(122,212,255,.5);
+  background:linear-gradient(180deg, rgba(122,212,255,.26), rgba(30,80,170,.4));
+  color:#fff;font-size:14px;letter-spacing:.2em;
+}
+.send:disabled{opacity:.4;cursor:not-allowed}
+.bar2{height:6px;border-radius:3px;background:rgba(2,10,32,.7);overflow:hidden;margin:6px 0 14px}
+.bar2 i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7ad4ff,#cfe8ff);transition:width 1.1s linear}
+.saved{font-size:13.5px;line-height:1.7;color:#c3d8f4}
+.saved a{color:var(--cyan)}
+.hide{display:none!important}
+footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;color:#5c7cab}
+
+/* ---------- memory card ---------- */
+.mcgrid{
+  display:flex;gap:18px;align-items:center;padding:18px;border:1px solid var(--line);border-radius:4px;
+  background:linear-gradient(150deg, rgba(120,175,255,.10), rgba(10,26,64,.35));margin-bottom:14px;
+}
+.mccard{
+  flex:0 0 auto;width:74px;height:96px;border-radius:5px;position:relative;
+  background:linear-gradient(155deg,#dbe8fb,#8fa9cf 42%,#2c4a86 100%);
+  box-shadow:0 8px 22px rgba(0,0,0,.55), 0 0 24px rgba(120,180,255,.22);
+}
+.mccard:after{
+  content:"";position:absolute;left:12px;right:12px;top:12px;height:26px;border-radius:2px;
+  background:linear-gradient(180deg,#20325c,#0d1836);box-shadow:inset 0 1px 0 rgba(255,255,255,.25);
+}
+.mccard b{
+  position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:8.5px;
+  letter-spacing:.2em;color:#12203f;font-weight:500;
+}
+.mcinfo{flex:1;font-size:11.5px;letter-spacing:.18em;line-height:2;color:#bcd6f6}
+.mcinfo em{color:var(--dimmer);font-style:normal}
+
+/* ---------- overlay de save ---------- */
+#saveov{
+  position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+  background:rgba(0,4,16,.86);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);padding:20px;
+}
+#saveov.on{display:flex}
+.savebox{
+  width:min(420px,94vw);border:1px solid var(--line-hot);border-radius:4px;
+  background:linear-gradient(170deg, rgba(18,48,110,.94), rgba(4,10,32,.97));
+  box-shadow:0 24px 70px rgba(0,0,0,.7);padding:26px 24px;
+}
+.savebox h3{margin:0 0 18px;font-weight:400;font-size:12px;letter-spacing:.34em;color:#bcd6f6}
+.savelog{font-size:11.5px;letter-spacing:.2em;line-height:2.1;color:#9dbde6;min-height:92px}
+.savelog b{display:block;font-weight:400;opacity:0;animation:fadein .4s ease forwards}
+.savelog .ok{color:var(--cyan)}
+.blocksbar{display:flex;gap:3px;margin:14px 0 6px}
+.blocksbar i{flex:1;height:12px;background:rgba(2,10,32,.8);border:1px solid rgba(122,212,255,.25);border-radius:1px;transition:background .15s ease}
+.blocksbar i.f{background:linear-gradient(180deg,#9fe0ff,#2b6ed9);border-color:transparent}
+.warn{font-size:10px;letter-spacing:.2em;color:#5f83b6;margin-top:14px;line-height:1.9}
+
+/* ---------- toast ---------- */
+#toast{
+  position:fixed;left:50%;bottom:calc(22px + var(--safe-b));transform:translateX(-50%) translateY(20px);
+  z-index:85;padding:11px 18px;border:1px solid var(--line-hot);border-radius:3px;
+  background:rgba(8,22,60,.92);font-size:11px;letter-spacing:.2em;color:#cfe8ff;
+  opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s ease;
+}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
+@media (min-width:880px) and (min-height:560px){
+  #creator{grid-template-rows:1fr;grid-template-columns:1fr 400px}
+  #panel{border-top:0;border-left:1px solid var(--line)}
+}
+@media (max-width:879px){
+  #studio{min-height:44vh}
+  #panel{max-height:min(54vh,440px)}
+  .cast{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-height:480px) and (orientation:landscape){
+  #creator{grid-template-rows:1fr;grid-template-columns:1fr 340px}
+  #panel{border-top:0;border-left:1px solid var(--line);max-height:none}
+  #studio{min-height:0}
+}
+@media (prefers-reduced-motion:reduce){
+  #cubes i{animation:none;opacity:.4}
+  .towers b{animation-duration:.01ms}
+  .press.on{animation:none}
+  .bar2 i{transition:none}
+  .screen.on{animation:none}
+}
+
+/* ---------- seletor de personagem (VRM) ---------- */
+.panel-head{display:flex;flex-direction:column;gap:4px;padding:14px 16px 10px}
+.panel-head b{font-family:"Barlow Condensed",sans-serif;font-weight:400;font-size:14px;
+  letter-spacing:.28em;color:var(--chrome)}
+.panel-head #castStatus{font-size:11px;letter-spacing:.18em;color:var(--cyan);min-height:14px}
+.cast{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px;
+  flex:1;min-height:0;overflow-y:auto;align-content:start}
+.cast-card{
+  position:relative;display:flex;flex-direction:column;gap:3px;align-items:flex-start;
+  padding:13px 14px;border:1px solid var(--line);background:rgba(10,24,60,.42);
+  cursor:pointer;text-align:left;transition:border-color .18s,background .18s,transform .18s;
+}
+.cast-card:hover{border-color:var(--line-hot);background:rgba(20,44,102,.5)}
+.cast-card[aria-pressed="true"]{border-color:var(--cyan);background:rgba(28,66,148,.55);
+  box-shadow:0 0 22px rgba(122,212,255,.16) inset}
+.cast-card.loading{opacity:.55;pointer-events:none}
+.cast-card.loading::after{
+  content:"";position:absolute;left:0;bottom:0;height:2px;width:40%;background:var(--cyan);
+  animation:ccbar 1.1s ease-in-out infinite}
+@keyframes ccbar{0%{left:0;width:15%}50%{left:42%;width:45%}100%{left:100%;width:15%}}
+.cc-n{font-family:"Barlow Condensed",sans-serif;font-size:19px;letter-spacing:.16em;color:var(--chrome)}
+.cc-c{font-size:11px;letter-spacing:.16em;color:var(--cyan)}
+.cc-a{font-size:10px;letter-spacing:.1em;color:var(--dimmer)}
+.cast-credit{margin:12px 16px 0;font-size:10px;letter-spacing:.14em;color:var(--dimmer)}
+.cast-credit b{font-weight:400;color:var(--dim)}
+</style>
+</head>
+<body>
+
+<div id="cubes" aria-hidden="true"></div>
+<div id="scan" aria-hidden="true"></div>
+
+<!-- ===================== BOOT ===================== -->
+<div id="boot">
+  <div class="legal" id="legal">1 jogador<br>memory card (8mb) na entrada 1<br>02.09.2026</div>
+  <div class="towers" id="towers"></div>
+  <div class="bootname" id="bootname">GUILHERME</div>
+  <button class="press" id="press" type="button">PRESS START</button>
+  <div class="bootlog" id="bootlog" aria-live="polite"></div>
+  <button class="skip" id="skip" type="button">pular</button>
+</div>
+
+<!-- ===================== MENU PRINCIPAL ===================== -->
+<section class="screen" id="menu" aria-label="Menu principal">
+  <div class="wrap">
+    <div class="hero">
+      <h1>GUILHERME</h1>
+      <p class="date">02.09.2026</p>
+    </div>
+    <p class="mlabel">MAIN MENU</p>
+    <div class="mlist" id="mlist">
+      <button class="mitem" data-go="creator" type="button">
+        <span class="mk" aria-hidden="true">&#9654;</span>
+        <span><span class="mt">CREATE AVATAR</span><span class="ms">monte seu personagem</span></span>
+        <span class="badge hide" id="badgeAvatar">SALVO</span>
+      </button>
+      <button class="mitem" data-go="invite" type="button">
+        <span class="mk" aria-hidden="true">&#9654;</span>
+        <span><span class="mt">VIEW INVITATION</span><span class="ms">o convite</span></span>
+      </button>
+      <button class="mitem" data-go="details" type="button">
+        <span class="mk" aria-hidden="true">&#9654;</span>
+        <span><span class="mt">EVENT DETAILS</span><span class="ms">data, local e horário</span></span>
+      </button>
+      <button class="mitem" data-go="rsvp" type="button">
+        <span class="mk" aria-hidden="true">&#9654;</span>
+        <span><span class="mt">RSVP</span><span class="ms">confirmar presença</span></span>
+        <span class="badge hide" id="badgeRsvp">OK</span>
+      </button>
+      <button class="mitem" data-go="memcard" type="button">
+        <span class="mk" aria-hidden="true">&#9654;</span>
+        <span><span class="mt">MEMORY CARD</span><span class="ms">dados salvos neste console</span></span>
+      </button>
+    </div>
+    <footer>use as setas ou toque &middot; 02.09.2026</footer>
+  </div>
+</section>
+
+<!-- ===================== CHARACTER CREATOR ===================== -->
+<section class="screen" id="creator" aria-label="Criação de avatar">
+  <div id="studio">
+    <div class="top">
+      <button class="back" data-go="menu" type="button">&#9664; VOLTAR</button>
+      <span class="who">CREATE YOUR AVATAR</span>
+    </div>
+    <div class="studio-tag"><b>PLAYER 1</b>character studio</div>
+    <div class="cam">
+      <button type="button" id="zin" title="Aproximar">ZOOM +</button>
+      <button type="button" id="zout" title="Afastar">ZOOM &minus;</button>
+      <button type="button" id="rot" aria-pressed="true" title="Rotação automática">ROTATE</button>
+      <button type="button" id="fit" title="Enquadrar">FIT</button>
+    </div>
+    <p class="hint" id="hint">arraste para girar &middot; pinça para zoom</p>
+  </div>
+
+  <div id="panel">
+    <div class="panel-head">
+      <b>SELECIONE SEU PERSONAGEM</b>
+      <span id="castStatus">CARREGANDO…</span>
+    </div>
+    <div class="cast" id="cast"></div>
+    <p class="cast-credit">modelos VRM do projeto <b>Webaverse</b></p>
+    <div class="pacts">
+      <button class="pbtn" id="rand" type="button">ALEATÓRIO</button>
+      <button class="pbtn pri" id="saveAvatar" type="button">SAVE AVATAR</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONVITE ===================== -->
+<section class="screen" id="invite" aria-label="Convite">
+  <div class="top">
+    <button class="back" data-go="menu" type="button">&#9664; MENU</button>
+    <span class="who">INVITATION</span>
+    <span class="stamp">02.09.2026</span>
+  </div>
+  <div class="wrap">
+    <div class="stage"><div id="portrait" aria-label="Seu avatar 3D"></div></div>
+    <p class="grab">arraste para girar</p>
+
+    <h1 class="big">GUILHERME</h1>
+    <p class="tagline">faz aniversário e você está convidado</p>
+    <p class="counter" id="counter1"></p>
+
+    <div class="blocks">
+      <div class="block">
+        <span class="chip" aria-hidden="true"></span>
+        <div><b>Quarta, 02 de setembro</b><span>data</span></div>
+      </div>
+      <a class="block" href="https://maps.app.goo.gl/CUoCWXj8A7CMnCFR6" target="_blank" rel="noopener">
+        <span class="chip red" aria-hidden="true"></span>
+        <div><b>Tio Armênio — Shopping Rio Poty</b><span>toque para abrir no mapa</span></div>
+        <span class="arrow" aria-hidden="true">&#8599;</span>
+      </a>
+      <div class="block">
+        <span class="chip" aria-hidden="true"></span>
+        <div><b id="horaTxt1">A combinar</b><span>horário</span></div>
+      </div>
+    </div>
+
+    <button class="pbtn pri" style="width:100%;padding:17px" data-go="rsvp" type="button">CONFIRMAR PRESENÇA</button>
+    <button class="pbtn" style="width:100%;padding:15px;margin-top:10px" data-go="creator" type="button">EDITAR MEU AVATAR</button>
+    <footer>até quarta</footer>
+  </div>
+</section>
+
+<!-- ===================== DETALHES ===================== -->
+<section class="screen" id="details" aria-label="Detalhes do evento">
+  <div class="top">
+    <button class="back" data-go="menu" type="button">&#9664; MENU</button>
+    <span class="who">EVENT DETAILS</span>
+  </div>
+  <div class="wrap">
+    <h1 class="big" style="font-size:clamp(34px,10vw,56px)">EVENTO</h1>
+    <p class="counter" id="counter2"></p>
+    <div class="blocks">
+      <div class="block">
+        <span class="chip" aria-hidden="true"></span>
+        <div><b>Quarta, 02 de setembro de 2026</b><span>data</span></div>
+      </div>
+      <div class="block">
+        <span class="chip" aria-hidden="true"></span>
+        <div><b id="horaTxt2">A combinar</b><span>horário</span></div>
+      </div>
+      <a class="block" href="https://maps.app.goo.gl/CUoCWXj8A7CMnCFR6" target="_blank" rel="noopener">
+        <span class="chip red" aria-hidden="true"></span>
+        <div><b>Tio Armênio — Shopping Rio Poty</b><span>abrir no google maps</span></div>
+        <span class="arrow" aria-hidden="true">&#8599;</span>
+      </a>
+      <div class="block">
+        <span class="chip" aria-hidden="true"></span>
+        <div><b>Traje livre</b><span>o resto a combinar</span></div>
+      </div>
+    </div>
+    <button class="pbtn pri" style="width:100%;padding:17px" data-go="rsvp" type="button">CONFIRMAR PRESENÇA</button>
+    <footer>até quarta</footer>
+  </div>
+</section>
+
+<!-- ===================== RSVP ===================== -->
+<section class="screen" id="rsvp" aria-label="Confirmar presença">
+  <div class="top">
+    <button class="back" data-go="menu" type="button">&#9664; MENU</button>
+    <span class="who">RSVP DATA</span>
+  </div>
+  <div class="wrap">
+    <section class="dialog">
+      <h2>SAVE DATA &middot; CONFIRMAR PRESENÇA</h2>
+      <div class="body">
+        <div id="form">
+          <p>Salve sua presença no memory card.</p>
+          <label for="nome">PLAYER NAME</label>
+          <input type="text" id="nome" autocomplete="name" placeholder="Como te chamam">
+          <label style="margin-top:18px">STATUS</label>
+          <div class="opts">
+            <button class="opt" type="button" id="sim" aria-pressed="false">Vou</button>
+            <button class="opt" type="button" id="nao" aria-pressed="false">Não vou</button>
+          </div>
+          <button class="send" type="button" id="send" disabled>CONFIRM</button>
+        </div>
+        <div id="saving" class="hide">
+          <p>Salvando dados. Não desligue o console.</p>
+          <div class="bar2"><i id="fill"></i></div>
+        </div>
+        <div id="done" class="hide">
+          <p class="saved" id="doneTxt"></p>
+          <button class="pbtn" style="width:100%;margin-top:14px" id="redo" type="button">EDITAR RESPOSTA</button>
+        </div>
+      </div>
+    </section>
+    <footer>até quarta</footer>
+  </div>
+</section>
+
+<!-- ===================== MEMORY CARD ===================== -->
+<section class="screen" id="memcard" aria-label="Memory card">
+  <div class="top">
+    <button class="back" data-go="menu" type="button">&#9664; MENU</button>
+    <span class="who">MEMORY CARD</span>
+    <span class="stamp">SLOT 1</span>
+  </div>
+  <div class="wrap">
+    <div class="mcgrid">
+      <div class="mccard"><b>8MB</b></div>
+      <div class="mcinfo" id="mcinfo"></div>
+    </div>
+    <div class="blocks" id="mcfiles"></div>
+    <div style="display:flex;gap:8px">
+      <button class="pbtn" id="mcload" type="button">LOAD AVATAR</button>
+      <button class="pbtn" id="mcdel" type="button">DELETE DATA</button>
+    </div>
+    <footer id="mcguest"></footer>
+  </div>
+</section>
+
+<!-- ===================== OVERLAY DE SAVE ===================== -->
+<div id="saveov" role="dialog" aria-modal="true" aria-label="Salvando no memory card">
+  <div class="savebox">
+    <h3>MEMORY CARD &middot; SLOT 1</h3>
+    <div class="savelog" id="savelog"></div>
+    <div class="blocksbar" id="blocksbar"></div>
+    <p class="warn" id="savewarn">NÃO DESLIGUE O CONSOLE NEM REMOVA O MEMORY CARD.</p>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@0.6.11/lib/three-vrm.min.js"></script>
+<script>
+/* ==========================================================================
+   CONVITE PS2 + AVATAR PS3
+   Arquivo único. Three.js (r128) via CDN. Nenhuma outra dependência.
+   --------------------------------------------------------------------------
+   ORGANIZAÇÃO
+     1. CONFIG / util / persistência (localStorage + suporte a ?guest=)
+     2. CATÁLOGO DE OPÇÕES (schema do criador de personagem)
+     3. GEOMETRIA — helpers de loft/tubo/shell (nada de Box/Cylinder no corpo)
+     4. AVATAR — construtores modulares por slot
+     5. STUDIO — cena, luzes, plataforma, câmera orbital
+     6. UI — abas, linhas com setas, randomize, save
+     7. FLUXO — boot, menu, convite, RSVP, memory card
+   ========================================================================== */
+
+/* ========================= 1. CONFIG ===================================== */
+var FESTA = {
+  hora: "",                 /* ex.: "20:00" — vazio exibe "A combinar" */
+  dataISO: "2026-09-02",
+  whatsapp: "",             /* ex.: "5586999999999" — vazio desativa o envio */
+  local: "Tio Armênio — Shopping Rio Poty",
+  mapa: "https://maps.app.goo.gl/CUoCWXj8A7CMnCFR6"
+};
+
+/* Elenco de personagens: ver CAST, na seção 2. Os .vrm ficam em
+   assets/avatars/ — trocar de modelo é só apontar outra url ali. */
+(function(){
+"use strict";
+
+var $  = function(s,r){ return (r||document).querySelector(s); };
+var $$ = function(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); };
+var REDUCE = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var MOBILE = window.matchMedia("(max-width: 879px)").matches || ("ontouchstart" in window);
+
+var clamp = function(v,a,b){ return v<a?a:(v>b?b:v); };
+var lerp  = function(a,b,t){ return a+(b-a)*t; };
+var smooth= function(e0,e1,x){ var t=clamp((x-e0)/(e1-e0),0,1); return t*t*(3-2*t); };
+var mix3  = function(a,b,t){ return [lerp(a[0],b[0],t),lerp(a[1],b[1],t),lerp(a[2],b[2],t)]; };
+
+/* ruído de valor determinístico — usado em cabelo/tecido */
+function hash1(n){ var s=Math.sin(n)*43758.5453123; return s-Math.floor(s); }
+function noise3(x,y,z){
+  var xi=Math.floor(x), yi=Math.floor(y), zi=Math.floor(z);
+  var xf=x-xi, yf=y-yi, zf=z-zi;
+  var u=xf*xf*(3-2*xf), v=yf*yf*(3-2*yf), w=zf*zf*(3-2*zf);
+  function g(i,j,k){ return hash1(i*157.31+j*311.7+k*74.7); }
+  var c000=g(xi,yi,zi),   c100=g(xi+1,yi,zi),   c010=g(xi,yi+1,zi),   c110=g(xi+1,yi+1,zi);
+  var c001=g(xi,yi,zi+1), c101=g(xi+1,yi,zi+1), c011=g(xi,yi+1,zi+1), c111=g(xi+1,yi+1,zi+1);
+  return lerp(lerp(lerp(c000,c100,u),lerp(c010,c110,u),v),
+              lerp(lerp(c001,c101,u),lerp(c011,c111,u),v), w)*2-1;
+}
+
+/* -------- persistência (memory card virtual) -------- */
+var GUEST = (function(){
+  var p = new URLSearchParams(location.search).get("guest");
+  return (p||"local").toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,32) || "local";
+})();
+var KEY_AV = "ps2conv.avatar."+GUEST;
+var KEY_RS = "ps2conv.rsvp."+GUEST;
+
+var Store = {
+  get:function(k){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } },
+  set:function(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } },
+  del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+
+/* ========================= 2. ELENCO (VRM) ===============================
+   Os personagens são modelos VRM do projeto Webaverse (webaverse/content),
+   otimizados para web: texturas reduzidas a 512px e blendshapes não usados
+   removidos — de 13–25 MB para 3–5 MB cada, sem perder rig nem expressões.
+   Trocar/acrescentar personagem = uma entrada nova aqui + o .vrm em assets.
+   ======================================================================== */
+var CAST = [
+  { id:"scillia", label:"SCILLIA",  classe:"Drophunter",   autor:"GloriaTheAnimator", url:"assets/avatars/scillia.vrm" },
+  { id:"ann",     label:"ANN",      classe:"Liskwitch",    autor:"Guilty",            url:"assets/avatars/ann.vrm" },
+  { id:"citrine", label:"CITRINE",  classe:"Hacker",       autor:"Webaverse",         url:"assets/avatars/citrine.vrm" },
+  { id:"buster",  label:"BUSTER",   classe:"Rabbit",       autor:"Guilty",            url:"assets/avatars/buster.vrm" }
+];
+
+var DEFAULT_CFG = { character: 0 };
+var CFG = Object.assign({}, DEFAULT_CFG);
+
+function castIndexById(id){
+  for (var i=0;i<CAST.length;i++) if (CAST[i].id===id) return i;
+  return 0;
+}
+
+/* ========================= 3. AVATAR VRM =================================
+   Um único slot: o VRM carregado. O módulo cuida de
+     · carregamento sob demanda + cache em memória (troca instantânea depois)
+     · pose de descanso (os VRM vêm em T/A-pose; braços descem ao lado)
+     · idle procedural — respiração, balanço de cabeça e piscada
+     · spring bones (cabelo/roupa) via vrm.update()
+   ======================================================================== */
+var HAS3D = (typeof THREE !== "undefined");
+var HASVRM = HAS3D && typeof THREE_VRM !== "undefined" && typeof THREE.GLTFLoader !== "undefined";
+
+/* cor em sRGB -> linear (o renderer trabalha em linear + output sRGB) */
+function col(hex){ var c = new THREE.Color(hex); if (c.convertSRGBToLinear) c.convertSRGBToLinear(); return c; }
+
+var VRMAvatar = {
+  root:null, vrm:null, cache:{}, loading:false, index:-1, ready:false,
+  onstate:null,          /* callback de UI: ("loading"|"ready"|"error", idx) */
+
+  create:function(){
+    this.root = new THREE.Group();
+    return this.root;
+  },
+
+  emit:function(state, idx){ if (this.onstate) this.onstate(state, idx); },
+
+  /* carrega (ou reusa) o personagem CAST[i] */
+  select:function(i, cb){
+    var self = this;
+    i = ((i % CAST.length) + CAST.length) % CAST.length;
+    CFG.character = i;
+    if (this.index === i && this.vrm) { if (cb) cb(this.vrm); return; }
+
+    var entry = CAST[i];
+    if (this.cache[entry.id]) { this.mount(this.cache[entry.id], i); if (cb) cb(this.vrm); return; }
+    if (!HASVRM) { this.emit("error", i); return; }
+
+    this.loading = true;
+    this.emit("loading", i);
+    var loader = new THREE.GLTFLoader();
+    loader.crossOrigin = "anonymous";
+    loader.load(entry.url, function(gltf){
+      THREE_VRM.VRM.from(gltf).then(function(vrm){
+        THREE_VRM.VRMUtils.removeUnnecessaryJoints(vrm.scene);
+        vrm.scene.traverse(function(o){
+          if (!o.isMesh) return;
+          /* esferas de colisão dos spring bones vêm visíveis no VRM 0.x */
+          if (/vrmCollider/i.test(o.name)) { o.visible = false; return; }
+          o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false;
+          var mats = Array.isArray(o.material) ? o.material : [o.material];
+          mats.forEach(function(m){
+            /* MToon entrega os mapas em LinearEncoding — sem isto tudo lava */
+            ["map","emissiveMap","shadeTexture","sphereAdd","rimTexture","outlineWidthTexture"]
+              .forEach(function(k){
+                var t = m[k] || (m.uniforms && m.uniforms[k] && m.uniforms[k].value);
+                if (t && t.isTexture && t.encoding !== THREE.sRGBEncoding){
+                  t.encoding = THREE.sRGBEncoding; t.needsUpdate = true;
+                }
+              });
+            m.needsUpdate = true;
+          });
+        });
+        vrm.scene.rotation.y = Math.PI;   /* VRM olha para -Z; a câmera está em +Z */
+        self.restPose(vrm);
+        self.cache[entry.id] = vrm;
+        self.mount(vrm, i);
+        self.loading = false;
+        if (cb) cb(vrm);
+      }).catch(function(err){
+        self.loading = false; self.emit("error", i);
+        if (window.console) console.warn("VRM parse falhou:", entry.url, err);
+      });
+    }, null, function(err){
+      self.loading = false; self.emit("error", i);
+      if (window.console) console.warn("VRM não carregou:", entry.url, err);
+    });
+  },
+
+  mount:function(vrm, i){
+    if (this.vrm && this.vrm.scene.parent) this.root.remove(this.vrm.scene);
+    this.vrm = vrm; this.index = i; this.ready = true;
+    this.root.add(vrm.scene);
+    this.emit("ready", i);
+  },
+
+  bone:function(vrm, name){
+    try { return vrm.humanoid.getBoneNode(THREE_VRM.VRMSchema.HumanoidBoneName[name]); }
+    catch(e){ return null; }
+  },
+
+  /* T/A-pose -> pose de descanso: braços para baixo, ombros relaxados */
+  restPose:function(vrm){
+    var set = function(node, x, y, z){ if (node) node.rotation.set(x||0, y||0, z||0); };
+    set(this.bone(vrm,"LeftUpperArm"),  0.06, 0,  1.16);
+    set(this.bone(vrm,"RightUpperArm"), 0.06, 0, -1.16);
+    set(this.bone(vrm,"LeftLowerArm"),  0,   -0.22,  0.14);
+    set(this.bone(vrm,"RightLowerArm"), 0,    0.22, -0.14);
+    set(this.bone(vrm,"LeftHand"),  0, 0,  0.08);
+    set(this.bone(vrm,"RightHand"), 0, 0, -0.08);
+    set(this.bone(vrm,"LeftUpperLeg"),  0, 0,  0.045);
+    set(this.bone(vrm,"RightUpperLeg"), 0, 0, -0.045);
+    /* guarda o repouso do peito/cabeça para o idle somar por cima */
+    vrm._rest = {
+      chest: this.bone(vrm,"Chest") || this.bone(vrm,"UpperChest") || this.bone(vrm,"Spine"),
+      head:  this.bone(vrm,"Head"),
+      hips:  this.bone(vrm,"Hips")
+    };
+    if (vrm._rest.hips) vrm._rest.hipsY = vrm._rest.hips.position.y;
+  },
+
+  /* idle + spring bones; chamado a cada frame pelo Studio */
+  update:function(dt, t, reduce){
+    var vrm = this.vrm;
+    if (!vrm) return;
+    var r = vrm._rest;
+    if (r && !reduce){
+      if (r.chest){
+        r.chest.rotation.x = Math.sin(t*1.15)*0.022;
+        r.chest.rotation.y = Math.sin(t*0.42)*0.030;
+      }
+      if (r.head){
+        r.head.rotation.y = Math.sin(t*0.31)*0.10;
+        r.head.rotation.x = Math.sin(t*0.53)*0.045;
+      }
+      if (r.hips) r.hips.position.y = r.hipsY + Math.sin(t*1.15)*0.006;
+    }
+    /* piscada: pálpebras fechadas ~120ms a cada 3–6 s */
+    if (vrm.blendShapeProxy && !reduce){
+      this._blinkIn = (this._blinkIn == null ? 2 : this._blinkIn) - dt;
+      if (this._blinkIn <= 0){ this._blinkIn = 3 + Math.random()*3; this._blinkUntil = t + 0.12; }
+      var closed = this._blinkUntil != null && t < this._blinkUntil ? 1 : 0;
+      if (closed !== this._blinkState){
+        vrm.blendShapeProxy.setValue(THREE_VRM.VRMSchema.BlendShapePresetName.Blink, closed);
+        this._blinkState = closed;
+      }
+    }
+    vrm.update(dt);
+  },
+
+  /* altura do modelo — usado para enquadrar a câmera */
+  height:function(){
+    if (!this.vrm) return 1.5;
+    var box = new THREE.Box3().setFromObject(this.vrm.scene);
+    var h = box.max.y - box.min.y;
+    return (isFinite(h) && h > 0.2) ? h : 1.5;
+  }
+};
+
+/* -------------------------------------------------------------------------
+   5. STUDIO — cena, luzes, plataforma e câmera orbital
+   ------------------------------------------------------------------------- */
+var Studio = {
+  ok:false, mount:null, mode:"creator", auto:true, envMap:null,
+  cam:{ r:3.4, th:0, ph:0.06, ty:1.02, tr:3.4, tth:0, tph:0.06 },
+
+  init:function(){
+    if (!HAS3D) return false;
+
+    this.renderer = new THREE.WebGLRenderer({ antialias:!MOBILE, alpha:true, powerPreference:"high-performance" });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, MOBILE?2:2));
+    this.renderer.outputEncoding = THREE.sRGBEncoding;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 0.86;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.domElement.setAttribute("aria-label","Avatar 3D");
+
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 60);
+
+    /* --- luz: chave quente + preenchimento azul + contraluz (§7) --- */
+    var hemi = new THREE.HemisphereLight(0x9dc4ff, 0x0a1430, 0.30); this.scene.add(hemi);
+    var key = new THREE.DirectionalLight(0xfff2e2, 0.90);
+    key.position.set(1.9, 3.1, 2.6);
+    key.castShadow = true;
+    key.shadow.mapSize.set(MOBILE?1024:2048, MOBILE?1024:2048);
+    key.shadow.camera.near=0.5; key.shadow.camera.far=10;
+    key.shadow.camera.left=-1.4; key.shadow.camera.right=1.4;
+    key.shadow.camera.top=2.4; key.shadow.camera.bottom=-0.4;
+    key.shadow.bias = -0.0009; key.shadow.normalBias = 0.014;
+    this.scene.add(key);
+    var fill = new THREE.DirectionalLight(0x6ea8ff, 0.26); fill.position.set(-2.6,1.6,1.4); this.scene.add(fill);
+    var rim  = new THREE.DirectionalLight(0x9fd8ff, 0.38); rim.position.set(-1.2,2.2,-3.0); this.scene.add(rim);
+    var rim2 = new THREE.DirectionalLight(0xffd9b0, 0.16); rim2.position.set(2.4,1.2,-2.4); this.scene.add(rim2);
+
+    /* --- environment procedural (reflexos discretos) --- */
+    try {
+      var env = new THREE.Scene();
+      var sky = new THREE.Mesh(new THREE.SphereGeometry(8, 16, 12),
+        new THREE.MeshBasicMaterial({ color: col("#16326b"), side:THREE.BackSide }));
+      env.add(sky);
+      function panel(hex, x,y,z, w,h, inten){
+        var m = new THREE.Mesh(new THREE.PlaneGeometry(w,h), new THREE.MeshBasicMaterial({ color: col(hex) }));
+        m.position.set(x,y,z); m.lookAt(0,1,0); m.material.color.multiplyScalar(inten||1); env.add(m);
+      }
+      panel("#ffffff", 3.5, 4.5, 3.0, 5, 5, 1.6);
+      panel("#8fc8ff",-4.0, 2.5, 1.5, 5, 6, 0.9);
+      panel("#5f9fff",-2.0, 2.0,-4.0, 6, 5, 1.1);
+      panel("#070c22", 0.0,-2.5, 0.0, 12, 12, 1.0);
+      var pm = new THREE.PMREMGenerator(this.renderer);
+      this.envMap = pm.fromScene(env, 0.03).texture;
+      this.scene.environment = this.envMap;
+      pm.dispose();
+    } catch(e){ this.envMap = null; }
+
+    /* --- avatar --- */
+    this.avatarRoot = new THREE.Group();
+    this.scene.add(this.avatarRoot);
+    this.avatarRoot.add(VRMAvatar.create());
+    VRMAvatar.select(CFG.character);
+
+    /* --- plataforma do showroom (§9) --- */
+    this.stage = new THREE.Group(); this.scene.add(this.stage);
+    (function(S){
+      var disc = new THREE.Mesh(new THREE.CircleGeometry(0.66, 64),
+        new THREE.MeshStandardMaterial({ color: col("#0d1e46"), roughness:0.30, metalness:0.35,
+          envMapIntensity:0.9 }));
+      disc.rotation.x = -Math.PI/2; disc.position.y = 0.001; disc.receiveShadow = true;
+      S.stage.add(disc);
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(0.66, 0.006, 6, 96),
+        new THREE.MeshBasicMaterial({ color: col("#7ad4ff") }));
+      ring.rotation.x = -Math.PI/2; ring.position.y = 0.004; S.stage.add(ring);
+      var ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.80, 0.002, 6, 96),
+        new THREE.MeshBasicMaterial({ color: col("#2b6ed9") }));
+      ring2.rotation.x = -Math.PI/2; ring2.position.y = 0.002; S.stage.add(ring2);
+      S.ring = ring;
+
+      /* partículas geométricas subindo (eco das caixas do PS2) */
+      var N=90, pos=new Float32Array(N*3), i;
+      for (i=0;i<N;i++){
+        var a=Math.random()*Math.PI*2, rr=0.35+Math.random()*1.5;
+        pos[i*3]=Math.cos(a)*rr; pos[i*3+1]=Math.random()*2.6; pos[i*3+2]=Math.sin(a)*rr;
+      }
+      var pg = new THREE.BufferGeometry();
+      pg.setAttribute("position", new THREE.BufferAttribute(pos,3));
+      S.dust = new THREE.Points(pg, new THREE.PointsMaterial({
+        color: col("#9fd8ff"), size:0.014, transparent:true, opacity:0.55, depthWrite:false }));
+      S.stage.add(S.dust);
+
+      /* sombra de contato no chão */
+      var sh = new THREE.Mesh(new THREE.PlaneGeometry(3,3), new THREE.ShadowMaterial({ opacity:0.42 }));
+      sh.rotation.x = -Math.PI/2; sh.receiveShadow = true; S.stage.add(sh);
+    })(this);
+
+    this.bindControls();
+    this.ok = true;
+    this.loop();
+    return true;
+  },
+
+  /* leva o canvas para o container ativo e ajusta o enquadramento */
+  attach:function(el, mode){
+    if (!this.ok) return;
+    this.mount = el; this.mode = mode||"creator";
+    el.appendChild(this.renderer.domElement);
+    this.stage.visible = (this.mode==="creator");
+    this.resize();
+    this.fit();
+  },
+  detach:function(){
+    if (this.renderer && this.renderer.domElement.parentNode)
+      this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+    this.mount = null;
+  },
+  resize:function(){
+    if (!this.mount) return;
+    var w = this.mount.clientWidth || 300, h = this.mount.clientHeight || 380;
+    this.renderer.setSize(w, h, true);
+    this.camera.aspect = w/h;
+    this.camera.updateProjectionMatrix();
+  },
+  /* enquadra o personagem inteiro respeitando o formato do container */
+  fit:function(){
+    if (!this.mount) return;
+    var w=this.mount.clientWidth||300, h=this.mount.clientHeight||380;
+    var need = (VRMAvatar.ready ? VRMAvatar.height() : 1.5) * 1.30;
+    var fov = this.camera.fov*Math.PI/180;
+    var r = (need/2)/Math.tan(fov/2);
+    if (w/h < 0.62) r *= lerp(1.0, 1.28, clamp((0.62-w/h)/0.35,0,1));
+    this.cam.tr = clamp(r, 2.2, 6.2);
+    this.cam.ty = (VRMAvatar.ready ? VRMAvatar.height() : 1.5) * 0.58;
+    this.cam.tph = this.mode==="creator" ? 0.05 : 0.03;
+  },
+
+  bindControls:function(){
+    var S=this, el=this.renderer.domElement;
+    var drag=false, lx=0, ly=0, pointers={}, pinch0=0, r0=0;
+
+    function down(e){
+      pointers[e.pointerId]={x:e.clientX,y:e.clientY};
+      if (Object.keys(pointers).length===1){ drag=true; lx=e.clientX; ly=e.clientY; S.idle=0; }
+      else if (Object.keys(pointers).length===2){
+        var k=Object.keys(pointers), a=pointers[k[0]], b=pointers[k[1]];
+        pinch0=Math.hypot(a.x-b.x,a.y-b.y); r0=S.cam.tr;
+      }
+      if (el.setPointerCapture) try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    }
+    function move(e){
+      if (!pointers[e.pointerId]) return;
+      pointers[e.pointerId]={x:e.clientX,y:e.clientY};
+      var n=Object.keys(pointers).length;
+      if (n===2){
+        var k=Object.keys(pointers), a=pointers[k[0]], b=pointers[k[1]];
+        var d=Math.hypot(a.x-b.x,a.y-b.y);
+        if (pinch0>0) S.cam.tr = clamp(r0*pinch0/d, 1.5, 6.5);
+        return;
+      }
+      if (!drag) return;
+      var dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+      S.cam.tth -= dx*0.0085;
+      S.cam.tph = clamp(S.cam.tph + dy*0.004, -0.42, 0.55);
+      S.idle = 0;
+      if (S.onDrag) S.onDrag();
+    }
+    function up(e){
+      delete pointers[e.pointerId];
+      if (!Object.keys(pointers).length){ drag=false; pinch0=0; }
+    }
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    el.addEventListener("pointerleave", up);
+    el.addEventListener("wheel", function(e){
+      e.preventDefault();
+      S.cam.tr = clamp(S.cam.tr + (e.deltaY>0?0.28:-0.28), 1.5, 6.5);
+    }, {passive:false});
+    window.addEventListener("resize", function(){ S.resize(); S.fit(); });
+  },
+
+  zoom:function(d){ this.cam.tr = clamp(this.cam.tr + d, 1.5, 6.5); },
+
+  loop:function(){
+    var S=this, last=performance.now();
+    (function frame(now){
+      requestAnimationFrame(frame);
+      var dt = Math.min(0.05,(now-last)/1000); last=now;
+      if (!S.mount || document.hidden) return;
+
+      /* rotação automática quando parado */
+      S.idle = (S.idle||0) + dt;
+      if (S.auto && S.idle>1.2 && !REDUCE) S.cam.tth += dt*0.22;
+
+      var c=S.cam;
+      c.r  += (c.tr - c.r)*0.12;
+      c.th += (c.tth - c.th)*0.14;
+      c.ph += (c.tph - c.ph)*0.14;
+      var cy = c.ty;
+      S.camera.position.set(
+        Math.sin(c.th)*Math.cos(c.ph)*c.r,
+        cy + Math.sin(c.ph)*c.r,
+        Math.cos(c.th)*Math.cos(c.ph)*c.r
+      );
+      S.camera.lookAt(0, cy, 0);
+
+      /* idle do personagem: respiração, balanço, piscada e spring bones */
+      VRMAvatar.update(dt, now/1000, REDUCE);
+
+      if (S.stage.visible){
+        if (S.ring) S.ring.rotation.z += dt*0.25;
+        if (S.dust){
+          var p = S.dust.geometry.attributes.position, i;
+          for (i=0;i<p.count;i++){
+            var y = p.getY(i) + dt*0.09;
+            if (y>2.7) y = 0;
+            p.setY(i,y);
+          }
+          p.needsUpdate = true;
+        }
+      }
+      S.renderer.render(S.scene, S.camera);
+    })(performance.now());
+  }
+};
+
+/* -------------------------------------------------------------------------
+   6. UI DO CRIADOR — abas + linhas "◀ VALOR ▶" (§10, §29)
+   ------------------------------------------------------------------------- */
+var UI = {
+  dirty:false, cards:[],
+
+  init:function(){
+    var self=this, list=$("#cast");
+    CAST.forEach(function(c,i){
+      var b=document.createElement("button");
+      b.className="cast-card"; b.type="button";
+      b.setAttribute("aria-pressed", i===CFG.character?"true":"false");
+      b.innerHTML = '<span class="cc-n">'+c.label+'</span>'+
+                    '<span class="cc-c">'+c.classe+'</span>'+
+                    '<span class="cc-a">'+c.autor+'</span>';
+      b.addEventListener("click", function(){ self.pick(i); });
+      list.appendChild(b);
+      self.cards.push(b);
+    });
+
+    VRMAvatar.onstate = function(state, idx){
+      var st=$("#castStatus");
+      self.cards.forEach(function(b,i){
+        b.setAttribute("aria-pressed", i===idx && state==="ready" ? "true" : "false");
+        b.classList.toggle("loading", i===idx && state==="loading");
+      });
+      if (state==="loading") st.textContent = "CARREGANDO "+CAST[idx].label+"…";
+      else if (state==="error") st.textContent = "FALHA AO CARREGAR "+CAST[idx].label;
+      else {
+        st.textContent = CAST[idx].label+" — "+CAST[idx].classe;
+        Studio.fit();
+      }
+    };
+
+    $("#rand").addEventListener("click", function(){
+      self.pick(Math.floor(Math.random()*CAST.length));
+      toast("PERSONAGEM SORTEADO");
+    });
+    $("#saveAvatar").addEventListener("click", function(){ MemCard.saveAvatar(); });
+    $("#zin").addEventListener("click", function(){ Studio.zoom(-0.35); Studio.idle=0; });
+    $("#zout").addEventListener("click", function(){ Studio.zoom(0.35); Studio.idle=0; });
+    $("#fit").addEventListener("click", function(){ Studio.fit(); Studio.cam.tth=0; Studio.cam.tph=0.05; Studio.idle=0; });
+    var rot = $("#rot");
+    rot.addEventListener("click", function(){
+      Studio.auto = !Studio.auto;
+      rot.setAttribute("aria-pressed", Studio.auto?"true":"false");
+    });
+    Studio.onDrag = function(){
+      var h=$("#hint"); if (h) h.style.opacity="0";
+    };
+
+    /* o Studio já pode ter disparado o primeiro load antes daqui */
+    if (VRMAvatar.loading) VRMAvatar.emit("loading", CFG.character);
+    else if (VRMAvatar.ready) VRMAvatar.emit("ready", VRMAvatar.index);
+  },
+
+  pick:function(i){
+    if (VRMAvatar.loading) return;
+    VRMAvatar.select(i);
+    this.dirty = true;
+    Studio.idle = 0;
+  },
+
+  refresh:function(){
+    var i=CFG.character;
+    this.cards.forEach(function(b,k){ b.setAttribute("aria-pressed", k===i?"true":"false"); });
+  }
+};
+
+/* -------------------------------------------------------------------------
+   MEMORY CARD — salvar/carregar (§11, §12, §13)
+   ------------------------------------------------------------------------- */
+var MemCard = {
+  saving:false,
+
+  payload:function(){
+    /* estrutura salva — pronta para associar a um convidado (§14) */
+    return {
+      v:2, guestId:GUEST, name:(Store.get(KEY_RS)||{}).name || null,
+      avatar:{ character: CAST[CFG.character].id },
+      savedAt:new Date().toISOString()
+    };
+  },
+
+  /* "peso" do arquivo — estilizado como um save de PS2 (fica perto de 142 KB) */
+  sizeKB:function(obj){
+    return 130 + Math.round(JSON.stringify(obj).length/40);
+  },
+
+  load:function(){
+    var d = Store.get(KEY_AV);
+    if (!d || !d.avatar) return false;
+    CFG.character = castIndexById(d.avatar.character);
+    return true;
+  },
+
+  /* animação de save inspirada no PS2 (§11, §12) */
+  saveAvatar:function(){
+    if (this.saving) return;
+    this.saving = true;
+    var data = this.payload(), kb = this.sizeKB(data);
+    var ov=$("#saveov"), log=$("#savelog"), bar=$("#blocksbar");
+    log.innerHTML=""; bar.innerHTML=""; ov.classList.add("on");
+    var i, cells=[];
+    for (i=0;i<16;i++){ var c=document.createElement("i"); bar.appendChild(c); cells.push(c); }
+
+    function line(t, cls){
+      var b=document.createElement("b");
+      if (cls) b.className=cls;
+      b.textContent=t; log.appendChild(b);
+    }
+    var step = REDUCE ? 1 : 1;
+    line("ACESSANDO MEMORY CARD (8MB) — SLOT 1");
+    setTimeout(function(){ line("ARQUIVO: AVATAR DATA"); }, 380*step);
+    setTimeout(function(){ line("TAMANHO: "+kb+" KB"); }, 640*step);
+    setTimeout(function(){ line("SALVANDO..."); }, 880*step);
+
+    var n=0;
+    var iv = setInterval(function(){
+      if (n<16){ cells[n].classList.add("f"); n++; }
+      else {
+        clearInterval(iv);
+        var okSave = Store.set(KEY_AV, data);
+        setTimeout(function(){
+          line(okSave ? "DATA SAVED" : "FALHA AO GRAVAR — ARMAZENAMENTO BLOQUEADO", "ok");
+          line(okSave ? "AVATAR SUCCESSFULLY SAVED" : "TENTE FORA DA JANELA ANÔNIMA", "ok");
+          $("#savewarn").textContent = okSave ? "STATUS: SAVED — SLOT 1" : "STATUS: ERROR";
+          UI.dirty = false;
+          Flow.refreshBadges();
+        }, 260);
+        setTimeout(function(){
+          ov.classList.remove("on");
+          MemCard.saving=false;
+          if (okSave) Flow.go("invite");
+        }, 1700);
+      }
+    }, REDUCE ? 20 : 78);
+  },
+
+  deleteAll:function(){
+    Store.del(KEY_AV); Store.del(KEY_RS);
+    CFG = Object.assign({}, DEFAULT_CFG);
+    VRMAvatar.select(CFG.character);
+    UI.refresh(); Flow.refreshBadges(); Flow.renderMemCard();
+    toast("DADOS APAGADOS DO SLOT 1");
+  }
+};
+
+function toast(msg){
+  var t=$("#toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(toast._t); toast._t=setTimeout(function(){ t.classList.remove("on"); }, 2600);
+}
+
+/* -------------------------------------------------------------------------
+   7. FLUXO — boot, menu, telas (§15, §16, §17)
+   ------------------------------------------------------------------------- */
+var Flow = {
+  cur:null,
+
+  go:function(id){
+    if (this.cur===id) return;
+    $$(".screen").forEach(function(s){ s.classList.remove("on"); });
+    var el=document.getElementById(id);
+    if (!el) return;
+    el.classList.add("on");
+    el.scrollTop = 0;
+    this.cur = id;
+
+    /* o canvas 3D migra entre o studio e o retrato do convite */
+    if (Studio.ok){
+      if (id==="creator"){ Studio.attach($("#studio"),"creator"); document.documentElement.style.setProperty("--crt",".07"); }
+      else if (id==="invite"){ Studio.attach($("#portrait"),"portrait"); document.documentElement.style.setProperty("--crt",".16"); }
+      else { Studio.detach(); document.documentElement.style.setProperty("--crt",".16"); }
+      setTimeout(function(){ Studio.resize(); Studio.fit(); }, 60);
+    }
+    if (id==="memcard") this.renderMemCard();
+    if (id==="menu") this.refreshBadges();
+    try{ history.replaceState(null,"", "#"+id + (GUEST!=="local"?("?guest="+GUEST):"")); }catch(e){}
+  },
+
+  refreshBadges:function(){
+    var av=Store.get(KEY_AV), rs=Store.get(KEY_RS);
+    $("#badgeAvatar").classList.toggle("hide", !av);
+    var b=$("#badgeRsvp");
+    b.classList.toggle("hide", !rs);
+    if (rs) b.textContent = rs.going ? "CONFIRMADO" : "AUSENTE";
+  },
+
+  renderMemCard:function(){
+    var av=Store.get(KEY_AV), rs=Store.get(KEY_RS);
+    var used = (av?142:0) + (rs?24:0);
+    $("#mcinfo").innerHTML =
+      "<em>SLOT 1</em> &middot; 8MB<br>"+
+      "<em>USADO</em> "+used+" KB<br>"+
+      "<em>LIVRE</em> "+(8192-used)+" KB<br>"+
+      "<em>STATUS</em> "+(av||rs ? "DADOS ENCONTRADOS" : "VAZIO");
+
+    var box=$("#mcfiles"); box.innerHTML="";
+    function file(title, sub, tag){
+      var d=document.createElement("div"); d.className="block";
+      d.innerHTML='<span class="chip" aria-hidden="true"></span><div><b>'+title+'</b><span>'+sub+'</span></div>'+
+                  '<span class="arrow">'+tag+'</span>';
+      box.appendChild(d);
+    }
+    if (av) file("AVATAR DATA", "salvo em "+new Date(av.savedAt).toLocaleString("pt-BR"), "142 KB");
+    if (rs) file("RSVP DATA", (rs.name||"—")+" &middot; "+(rs.going?"VOU":"NÃO VOU"), "24 KB");
+    if (!av && !rs) file("SEM DADOS", "nenhum arquivo neste memory card", "—");
+    $("#mcguest").textContent = "GUEST ID: "+GUEST.toUpperCase();
+    $("#mcload").disabled = !av;
+  },
+
+  boot:function(){
+    var boot=$("#boot"), log=$("#bootlog"), name=$("#bootname"), press=$("#press");
+    var towers=$("#towers"), t;
+    for (t=0;t<9;t++){
+      var b=document.createElement("b");
+      b.style.setProperty("--h",(22+(t%3)*18+(t*9)%46)+"px");
+      b.style.animationDelay=(0.45+t*0.11)+"s";
+      towers.appendChild(b);
+    }
+    var hasSave = !!Store.get(KEY_AV);
+    function line(txt){ var el=document.createElement("b"); el.textContent=txt; log.appendChild(el); }
+    var T = REDUCE ? 0.05 : 1;
+    setTimeout(function(){ $("#legal").style.opacity="1"; }, 250*T);
+    setTimeout(function(){ line(hasSave ? "MEMORY CARD (8MB) — SLOT 1: DADOS ENCONTRADOS"
+                                        : "MEMORY CARD (8MB) — SLOT 1: SEM DADOS"); }, 2100*T);
+    setTimeout(function(){ line("LOADING AVATAR SYSTEM..."); }, 2800*T);
+    setTimeout(function(){ line("WELCOME"); name.style.opacity="1"; }, 3500*T);
+    setTimeout(function(){ press.classList.add("on"); Flow.bootReady=true; }, 4300*T);
+
+    function end(){
+      if (boot.classList.contains("gone")) return;
+      boot.classList.add("gone");
+      setTimeout(function(){ boot.remove(); }, 800);
+      Flow.go("menu");
+    }
+    Flow.endBoot = end;
+    $("#skip").addEventListener("click", function(e){ e.stopPropagation(); end(); });
+    press.addEventListener("click", end);
+    boot.addEventListener("click", function(){ if (Flow.bootReady) end(); });
+    window.addEventListener("keydown", function(e){
+      if (!Flow.bootReady) return;
+      if (e.key==="Enter"||e.key===" ") end();
+    }, {once:false});
+    setTimeout(function(){ if (Flow.bootReady) {} }, 0);
+  },
+
+  init:function(){
+    var self=this;
+
+    /* navegação por data-go */
+    document.addEventListener("click", function(e){
+      var t=e.target.closest ? e.target.closest("[data-go]") : null;
+      if (t){ e.preventDefault(); self.go(t.getAttribute("data-go")); }
+    });
+
+    /* navegação por teclado no menu */
+    var idx=0;
+    window.addEventListener("keydown", function(e){
+      if (self.cur!=="menu") {
+        if (e.key==="Escape" && self.cur && self.cur!=="menu") self.go("menu");
+        return;
+      }
+      var items=$$("#mlist .mitem");
+      if (e.key==="ArrowDown"||e.key==="ArrowUp"){
+        e.preventDefault();
+        idx=(idx+(e.key==="ArrowDown"?1:-1)+items.length)%items.length;
+        items.forEach(function(it,i){ it.classList.toggle("sel", i===idx); });
+        items[idx].focus();
+      } else if (e.key==="Enter"){
+        if (items[idx]) items[idx].click();
+      }
+    });
+
+    /* contagem regressiva (preservada do convite original) */
+    if (FESTA.hora){ $("#horaTxt1").textContent=FESTA.hora; $("#horaTxt2").textContent=FESTA.hora; }
+    var alvo=new Date(FESTA.dataISO+"T"+(FESTA.hora||"00:00")+":00-03:00");
+    function tick(){
+      var d=alvo-new Date(), txt;
+      if (d<=0) txt="é hoje";
+      else {
+        var h=Math.floor(d/3.6e6), m=Math.floor(d%3.6e6/6e4), s=Math.floor(d%6e4/1000);
+        var dias=Math.floor(h/24);
+        txt=(dias>0?dias+"d ":"")+(h%24)+"h "+m+"m "+s+"s";
+      }
+      $("#counter1").textContent=txt; $("#counter2").textContent=txt;
+    }
+    tick(); setInterval(tick,1000);
+
+    /* ---- RSVP (funcionalidade original preservada) ---- */
+    var vai=null, nome=$("#nome"), send=$("#send"), sim=$("#sim"), nao=$("#nao");
+    function refresh(){ send.disabled=!(vai!==null && nome.value.trim().length>1); }
+    function pick(v){
+      vai=v;
+      sim.setAttribute("aria-pressed", v?"true":"false");
+      nao.setAttribute("aria-pressed", v?"false":"true");
+      send.textContent = v ? "CONFIRM — SALVAR PRESENÇA" : "CONFIRM — SALVAR RECUSA";
+      refresh();
+    }
+    sim.addEventListener("click", function(){ pick(true); });
+    nao.addEventListener("click", function(){ pick(false); });
+    nome.addEventListener("input", refresh);
+
+    var saved=Store.get(KEY_RS);
+    if (saved){ nome.value=saved.name||""; pick(!!saved.going); showDone(saved.name, saved.going); }
+
+    function showDone(n, going){
+      $("#form").classList.add("hide"); $("#saving").classList.add("hide");
+      var done=$("#done"), txt=$("#doneTxt");
+      done.classList.remove("hide");
+      var msg = going
+        ? n+" confirmou presença no aniversário do Guilherme, dia 02/09."
+        : n+" não vai conseguir ir no aniversário do Guilherme, dia 02/09.";
+      if (FESTA.whatsapp){
+        var url="https://wa.me/"+FESTA.whatsapp+"?text="+encodeURIComponent(msg);
+        txt.innerHTML=(going?"Presença salva. ":"Anotado. ")+
+          'Só falta avisar: <a href="'+url+'" target="_blank" rel="noopener">mandar no WhatsApp</a>.';
+      } else {
+        txt.textContent = going ? "Presença salva, "+n+". Nos vemos quarta."
+                                : "Anotado, "+n+". Fica pra próxima.";
+      }
+    }
+    send.addEventListener("click", function(){
+      var n=nome.value.trim();
+      $("#form").classList.add("hide");
+      $("#saving").classList.remove("hide");
+      setTimeout(function(){ $("#fill").style.width="100%"; },40);
+      setTimeout(function(){
+        $("#saving").classList.add("hide");
+        Store.set(KEY_RS, { name:n, going:vai, at:new Date().toISOString(), guestId:GUEST });
+        showDone(n, vai);
+        self.refreshBadges();
+      }, REDUCE?100:1350);
+    });
+    $("#redo").addEventListener("click", function(){
+      $("#done").classList.add("hide"); $("#form").classList.remove("hide");
+      $("#fill").style.width="0";
+    });
+
+    /* ---- memory card ---- */
+    $("#mcload").addEventListener("click", function(){
+      if (MemCard.load()){
+        VRMAvatar.select(CFG.character); UI.refresh();
+        toast("AVATAR CARREGADO DO SLOT 1"); self.go("creator");
+      }
+    });
+    $("#mcdel").addEventListener("click", function(){
+      if (confirm("Apagar avatar e RSVP salvos neste navegador?")) MemCard.deleteAll();
+    });
+
+    this.refreshBadges();
+  }
+};
+
+/* -------------------------------------------------------------------------
+   PARTIDA
+   ------------------------------------------------------------------------- */
+(function start(){
+  /* caixas flutuantes do fundo (preservadas do convite original) */
+  var cubes=$("#cubes"), i;
+  for (i=0;i<14;i++){
+    var el=document.createElement("i");
+    var s=26+(i*13)%74;
+    el.style.width=s+"px"; el.style.height=s+"px";
+    el.style.left=((i*37)%96)+"vw"; el.style.top=(100+(i*11)%40)+"vh";
+    el.style.animationDuration=(26+(i*7)%26)+"s";
+    el.style.animationDelay=(-(i*4.3))+"s";
+    cubes.appendChild(el);
+  }
+
+  var loaded = MemCard.load();           /* carrega avatar salvo, se houver (§13) */
+
+  if (HAS3D){
+    try { Studio.init(); }
+    catch(err){
+      console.error(err);
+      var st=$("#studio");
+      if (st) st.insertAdjacentHTML("beforeend",
+        '<p style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;'+
+        'text-align:center;padding:30px;font-size:12px;letter-spacing:.2em;color:#8fb1de">'+
+        'SEU NAVEGADOR NÃO CONSEGUIU INICIAR O WEBGL.<br>O CONVITE CONTINUA FUNCIONANDO.</p>');
+    }
+  }
+  if (Studio.ok) UI.init();
+  Flow.init();
+  Flow.boot();
+
+  /* ponto de extensão/depuração: permite inspecionar e pilotar a experiência
+     de fora (ex.: PS2CONVITE.set("citrine") ou PS2CONVITE.Studio.cam) */
+  window.PS2CONVITE = {
+    Studio:Studio, Avatar:VRMAvatar, UI:UI, Flow:Flow, MemCard:MemCard,
+    CFG:CFG, CAST:CAST,
+    set:function(id){ UI.pick(typeof id==="number" ? id : castIndexById(id)); }
+  };
+  if (loaded) setTimeout(function(){ toast("AVATAR CARREGADO DO MEMORY CARD"); }, 5200);
+})();
+
+})();
+</script>
+</body>
+</html>
