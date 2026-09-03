@@ -372,7 +372,10 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
 @media (max-width:879px){
   #studio{min-height:44vh}
   #panel{max-height:min(54vh,440px)}
-  .cast{grid-template-columns:repeat(2,1fr)}
+  .cast{grid-template-columns:repeat(3,1fr)}
+  .row{padding:6px 4px}
+  .row .rn{flex-basis:70px;font-size:9px;letter-spacing:.16em}
+  .arw{width:40px;height:36px}
 }
 @media (max-height:480px) and (orientation:landscape){
   #creator{grid-template-rows:1fr;grid-template-columns:1fr 340px}
@@ -392,11 +395,10 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
 .panel-head b{font-family:"Barlow Condensed",sans-serif;font-weight:400;font-size:14px;
   letter-spacing:.28em;color:var(--chrome)}
 .panel-head #castStatus{font-size:11px;letter-spacing:.18em;color:var(--cyan);min-height:14px}
-.cast{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px;
-  flex:1;min-height:0;overflow-y:auto;align-content:start}
+.cast{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px;flex:0 0 auto}
 .cast-card{
-  position:relative;display:flex;flex-direction:column;gap:3px;align-items:flex-start;
-  padding:13px 14px;border:1px solid var(--line);background:rgba(10,24,60,.42);
+  position:relative;display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+  padding:10px 11px;border:1px solid var(--line);background:rgba(10,24,60,.42);
   cursor:pointer;text-align:left;transition:border-color .18s,background .18s,transform .18s;
 }
 .cast-card:hover{border-color:var(--line-hot);background:rgba(20,44,102,.5)}
@@ -407,11 +409,37 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
   content:"";position:absolute;left:0;bottom:0;height:2px;width:40%;background:var(--cyan);
   animation:ccbar 1.1s ease-in-out infinite}
 @keyframes ccbar{0%{left:0;width:15%}50%{left:42%;width:45%}100%{left:100%;width:15%}}
-.cc-n{font-family:"Barlow Condensed",sans-serif;font-size:19px;letter-spacing:.16em;color:var(--chrome)}
-.cc-c{font-size:11px;letter-spacing:.16em;color:var(--cyan)}
+.cc-n{font-family:"Barlow Condensed",sans-serif;font-size:15px;letter-spacing:.12em;color:var(--chrome)}
+.cc-c{font-size:9.5px;letter-spacing:.12em;color:var(--cyan)}
 .cc-a{font-size:10px;letter-spacing:.1em;color:var(--dimmer)}
 .cast-credit{margin:12px 16px 0;font-size:10px;letter-spacing:.14em;color:var(--dimmer)}
 .cast-credit b{font-weight:400;color:var(--dim)}
+
+/* ---------- linhas de customização ---------- */
+.rows{flex:1;min-height:0;overflow-y:auto;padding:12px 12px 4px;margin-top:6px;
+  border-top:1px solid var(--line)}
+.row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:3px;
+  border:1px solid transparent}
+.row:hover{border-color:var(--line);background:rgba(122,212,255,.05)}
+.row .rn{flex:0 0 84px;font-size:9.5px;letter-spacing:.2em;color:#7b9fcd}
+.row .rv{
+  flex:1;position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
+  font-size:12.5px;letter-spacing:.12em;color:#e6f0ff;white-space:nowrap;overflow:hidden;
+}
+.row .rv.anim{animation:pop .3s ease}
+@keyframes pop{from{opacity:.15;transform:translateY(4px)}to{opacity:1;transform:none}}
+.sw{width:14px;height:14px;border-radius:50%;flex:0 0 auto;
+  border:1px solid rgba(255,255,255,.35);box-shadow:0 0 8px rgba(0,0,0,.4) inset}
+.rbar{position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px;
+  background:rgba(2,10,32,.75);overflow:hidden}
+.rbar b{display:block;height:100%;background:linear-gradient(90deg,#2b6ed9,#7ad4ff);
+  transition:width .22s ease}
+.arw{
+  width:36px;height:32px;flex:0 0 auto;border:1px solid var(--line);border-radius:2px;
+  background:rgba(120,175,255,.07);color:#a9c9f0;font-size:11px;cursor:pointer;
+}
+.arw:hover{border-color:var(--cyan);color:#fff;background:rgba(122,212,255,.18)}
+.arw:active{transform:scale(.94)}
 </style>
 </head>
 <body>
@@ -488,10 +516,12 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
       <span id="castStatus">CARREGANDO…</span>
     </div>
     <div class="cast" id="cast"></div>
-    <p class="cast-credit">modelos VRM do projeto <b>Webaverse</b></p>
+    <div class="rows" id="rows"></div>
+    <p class="cast-credit">modelos VRM de exemplo do <b>VRoid Studio</b> — CC0</p>
     <div class="pacts">
+      <button class="pbtn" id="reset" type="button">RESET</button>
       <button class="pbtn" id="rand" type="button">ALEATÓRIO</button>
-      <button class="pbtn pri" id="saveAvatar" type="button">SAVE AVATAR</button>
+      <button class="pbtn pri" id="saveAvatar" type="button">SAVE</button>
     </div>
   </div>
 </section>
@@ -703,20 +733,65 @@ var Store = {
   del:function(k){ try{ localStorage.removeItem(k); }catch(e){} }
 };
 
-/* ========================= 2. ELENCO (VRM) ===============================
-   Os personagens são modelos VRM do projeto Webaverse (webaverse/content),
-   otimizados para web: texturas reduzidas a 512px e blendshapes não usados
-   removidos — de 13–25 MB para 3–5 MB cada, sem perder rig nem expressões.
-   Trocar/acrescentar personagem = uma entrada nova aqui + o .vrm em assets.
+/* ========================= 2. ELENCO E CATÁLOGO ==========================
+   Os personagens são os modelos de exemplo do VRoid Studio, publicados em
+   CC0 (domínio público). Todos exportam material separado por parte, com
+   nomenclatura estável (…_HAIR, …Tops_01_CLOTH, …EyeIris_00_EYE, …_SKIN),
+   que é justamente o que permite recolorir cada peça de forma independente.
+   Otimizados para web: texturas 512px + poda de blendshapes não usados
+   (14–19 MB por modelo reduzidos para ~3 MB), rig e expressões intactos.
    ======================================================================== */
 var CAST = [
-  { id:"scillia", label:"SCILLIA",  classe:"Drophunter",   autor:"GloriaTheAnimator", url:"assets/avatars/scillia.vrm" },
-  { id:"ann",     label:"ANN",      classe:"Liskwitch",    autor:"Guilty",            url:"assets/avatars/ann.vrm" },
-  { id:"citrine", label:"CITRINE",  classe:"Hacker",       autor:"Webaverse",         url:"assets/avatars/citrine.vrm" },
-  { id:"buster",  label:"BUSTER",   classe:"Rabbit",       autor:"Guilty",            url:"assets/avatars/buster.vrm" }
+  { id:"shino",    label:"SHINO",    classe:"Sendagaya", url:"assets/avatars/shino.vrm" },
+  { id:"shibu",    label:"SHIBU",    classe:"Sendagaya", url:"assets/avatars/shibu.vrm" },
+  { id:"fumiriya", label:"FUMIRIYA", classe:"Sakurada",  url:"assets/avatars/fumiriya.vrm" },
+  { id:"victoria", label:"VICTORIA", classe:"Rubin",     url:"assets/avatars/victoria.vrm" },
+  { id:"vita",     label:"VITA",     classe:"VRoid",     url:"assets/avatars/vita.vrm" },
+  { id:"vivi",     label:"VIVI",     classe:"VRoid",     url:"assets/avatars/vivi.vrm" }
 ];
 
-var DEFAULT_CFG = { character: 0 };
+/* Peças coloríveis. `test` casa com o nome do material do VRM; a peça some
+   do painel quando o personagem não tem material correspondente (a Victoria
+   usa vestido, por exemplo, e portanto não tem "Bottoms"). */
+var PARTS = [
+  { k:"hair",   label:"CABELO",  test:/_HAIR(_|$)/i,              pal:"hair" },
+  { k:"tops",   label:"BLUSA",   test:/Tops_\d+_CLOTH/i,          pal:"cloth" },
+  { k:"bottom", label:"CALÇA",   test:/Bottoms_\d+_CLOTH/i,       pal:"cloth" },
+  { k:"shoes",  label:"CALÇADO", test:/Shoes_\d+_CLOTH/i,         pal:"cloth" },
+  { k:"neck",   label:"GOLA",    test:/AccessoryNeck_\d+_CLOTH/i, pal:"cloth" },
+  { k:"eyes",   label:"OLHOS",   test:/EyeIris/i,                 pal:"eye" },
+  { k:"skin",   label:"PELE",    test:/_SKIN(_|$)/i,              pal:"skin" }
+];
+
+/* As paletas multiplicam a textura original — por isso o primeiro item é
+   sempre "original" (branco = sem alteração) e os tons escuros respondem
+   melhor que os claros. */
+var PAL = {
+  hair:  [["original","#ffffff"],["preto","#4a4a52"],["castanho","#8a6144"],["loiro","#e8c98a"],
+          ["ruivo","#c8663a"],["platinado","#e6e6ea"],["azul","#6f9bd8"],["verde","#7fb894"],
+          ["roxo","#a984d0"],["rosa","#e79ec0"]],
+  cloth: [["original","#ffffff"],["preto","#55555e"],["branco","#f0f2f6"],["azul","#5f86c8"],
+          ["marinho","#4a5a86"],["vermelho","#c85a5a"],["verde","#6fae84"],["amarelo","#e4c574"],
+          ["roxo","#9d82c6"],["rosa","#e5a0bd"],["laranja","#dd9057"]],
+  eye:   [["original","#ffffff"],["castanho","#9a6b45"],["azul","#6aa6dd"],["verde","#74b487"],
+          ["âmbar","#d9a05a"],["cinza","#a8b0bb"],["violeta","#a586d4"]],
+  skin:  [["original","#ffffff"],["claro","#f7e6dc"],["médio","#e8c8b0"],["oliva","#d3ae8c"],
+          ["moreno","#b98a62"],["escuro","#8f6544"]]
+};
+
+var EXPR = [
+  ["neutro",  null],
+  ["alegre",  "Joy"],
+  ["animado", "Fun"],
+  ["sério",   "Angry"],
+  ["tímido",  "Sorrow"]
+];
+
+var DEFAULT_CFG = {
+  character:0,
+  hair:0, tops:0, bottom:0, shoes:0, neck:0, eyes:0, skin:0,
+  height:0.5, build:0.5, expr:0
+};
 var CFG = Object.assign({}, DEFAULT_CFG);
 
 function castIndexById(id){
@@ -728,6 +803,7 @@ function castIndexById(id){
    Um único slot: o VRM carregado. O módulo cuida de
      · carregamento sob demanda + cache em memória (troca instantânea depois)
      · pose de descanso (os VRM vêm em T/A-pose; braços descem ao lado)
+     · customização — cor por peça, altura, porte e expressão
      · idle procedural — respiração, balanço de cabeça e piscada
      · spring bones (cabelo/roupa) via vrm.update()
    ======================================================================== */
@@ -766,26 +842,7 @@ var VRMAvatar = {
     loader.load(entry.url, function(gltf){
       THREE_VRM.VRM.from(gltf).then(function(vrm){
         THREE_VRM.VRMUtils.removeUnnecessaryJoints(vrm.scene);
-        vrm.scene.traverse(function(o){
-          if (!o.isMesh) return;
-          /* esferas de colisão dos spring bones vêm visíveis no VRM 0.x */
-          if (/vrmCollider/i.test(o.name)) { o.visible = false; return; }
-          o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false;
-          var mats = Array.isArray(o.material) ? o.material : [o.material];
-          mats.forEach(function(m){
-            /* MToon entrega os mapas em LinearEncoding — sem isto tudo lava */
-            ["map","emissiveMap","shadeTexture","sphereAdd","rimTexture","outlineWidthTexture"]
-              .forEach(function(k){
-                var t = m[k] || (m.uniforms && m.uniforms[k] && m.uniforms[k].value);
-                if (t && t.isTexture && t.encoding !== THREE.sRGBEncoding){
-                  t.encoding = THREE.sRGBEncoding; t.needsUpdate = true;
-                }
-              });
-            m.needsUpdate = true;
-          });
-        });
-        vrm.scene.rotation.y = Math.PI;   /* VRM olha para -Z; a câmera está em +Z */
-        self.restPose(vrm);
+        self.prepare(vrm);
         self.cache[entry.id] = vrm;
         self.mount(vrm, i);
         self.loading = false;
@@ -800,11 +857,52 @@ var VRMAvatar = {
     });
   },
 
+  /* varre a cena uma vez: corrige encoding, esconde colliders e indexa os
+     materiais por peça — é esse índice que a customização usa depois */
+  prepare:function(vrm){
+    var parts = {};
+    vrm.scene.traverse(function(o){
+      if (!o.isMesh) return;
+      /* esferas de colisão dos spring bones vêm visíveis no VRM 0.x */
+      if (/vrmCollider/i.test(o.name)) { o.visible = false; return; }
+      o.castShadow = true; o.receiveShadow = false; o.frustumCulled = false;
+      var mats = Array.isArray(o.material) ? o.material : [o.material];
+      mats.forEach(function(m){
+        /* MToon entrega os mapas em LinearEncoding — sem isto tudo lava */
+        ["map","emissiveMap","shadeTexture","sphereAdd","rimTexture","outlineWidthTexture"]
+          .forEach(function(k){
+            var t = m[k] || (m.uniforms && m.uniforms[k] && m.uniforms[k].value);
+            if (t && t.isTexture && t.encoding !== THREE.sRGBEncoding){
+              t.encoding = THREE.sRGBEncoding; t.needsUpdate = true;
+            }
+          });
+        m.needsUpdate = true;
+        for (var i=0;i<PARTS.length;i++){
+          if (!PARTS[i].test.test(m.name || "")) continue;
+          (parts[PARTS[i].k] = parts[PARTS[i].k] || []).push(m);
+          break;
+        }
+      });
+    });
+    vrm._parts = parts;
+    vrm.scene.rotation.y = Math.PI;   /* VRM olha para -Z; a câmera está em +Z */
+    this.restPose(vrm);
+  },
+
   mount:function(vrm, i){
     if (this.vrm && this.vrm.scene.parent) this.root.remove(this.vrm.scene);
     this.vrm = vrm; this.index = i; this.ready = true;
     this.root.add(vrm.scene);
+    this.applyAll();
     this.emit("ready", i);
+  },
+
+  /* quais peças este personagem realmente tem */
+  availableParts:function(){
+    var p = this.vrm && this.vrm._parts, out = [];
+    if (!p) return out;
+    for (var i=0;i<PARTS.length;i++) if (p[PARTS[i].k] && p[PARTS[i].k].length) out.push(PARTS[i]);
+    return out;
   },
 
   bone:function(vrm, name){
@@ -827,9 +925,148 @@ var VRMAvatar = {
     vrm._rest = {
       chest: this.bone(vrm,"Chest") || this.bone(vrm,"UpperChest") || this.bone(vrm,"Spine"),
       head:  this.bone(vrm,"Head"),
-      hips:  this.bone(vrm,"Hips")
+      hips:  this.bone(vrm,"Hips"),
+      spine: this.bone(vrm,"Spine")
     };
     if (vrm._rest.hips) vrm._rest.hipsY = vrm._rest.hips.position.y;
+  },
+
+  /* ---------------- customização ---------------- */
+
+  /* Recolorir de verdade exige mexer na textura: o uniforme color do MToon
+     só multiplica, então numa peça escura (colete marinho, saia preta) a cor
+     escolhida praticamente não aparece. Aqui a textura original é convertida
+     em luminância uma vez e repintada no tom pedido, preservando o desenho e
+     o alfa. O intervalo 0.45–1.00 evita que a parte escura coma o matiz. */
+  colorizeMap:function(m, hex){
+    var u = m.uniforms;
+    if (!u || !u.map || !u.map.value || !u.map.value.image) return false;
+
+    if (!m._tint){
+      var img = u.map.value.image;
+      var w = img.width, h = img.height;
+      if (!w || !h) return false;
+      var cv = document.createElement("canvas"); cv.width=w; cv.height=h;
+      var cx = cv.getContext("2d");
+      if (!cx) return false;
+      try { cx.drawImage(img, 0, 0); } catch(e){ return false; }   /* imagem ainda não decodificada */
+      m._tint = { canvas:cv, ctx:cx, img:img, w:w, h:h, filter:(typeof cx.filter === "string") };
+      m._origMap = u.map.value;
+      var tex = new THREE.CanvasTexture(cv);
+      tex.flipY   = u.map.value.flipY;
+      tex.wrapS   = u.map.value.wrapS;
+      tex.wrapT   = u.map.value.wrapT;
+      tex.encoding = THREE.sRGBEncoding;
+      m._tintTex = tex;
+    }
+
+    var t = m._tint, cx = t.ctx;
+    cx.globalCompositeOperation = "source-over";
+    cx.clearRect(0, 0, t.w, t.h);
+
+    if (t.filter){
+      /* tudo em composição de canvas: cinza -> piso de luminância -> tom ->
+         recorte pelo alfa original. Ordens de grandeza mais rápido que
+         percorrer os pixels em JS (o cabelo levava mais de meio segundo). */
+      cx.filter = "grayscale(1)";
+      cx.drawImage(t.img, 0, 0);
+      cx.filter = "none";
+      cx.globalCompositeOperation = "lighten";        /* piso ~0.45: o preto ainda aceita cor */
+      cx.fillStyle = "#737373"; cx.fillRect(0, 0, t.w, t.h);
+      cx.globalCompositeOperation = "multiply";
+      cx.fillStyle = hex; cx.fillRect(0, 0, t.w, t.h);
+      cx.globalCompositeOperation = "destination-in"; /* devolve o alfa da textura */
+      cx.drawImage(t.img, 0, 0);
+      cx.globalCompositeOperation = "source-over";
+    } else {
+      /* navegador sem ctx.filter: caminho lento, pixel a pixel */
+      cx.drawImage(t.img, 0, 0);
+      var d, i, c = new THREE.Color(hex);
+      try { d = cx.getImageData(0, 0, t.w, t.h); } catch(e){ return false; }
+      for (i=0;i<t.w*t.h;i++){
+        var f = 0.45 + 0.55*((0.2126*d.data[i*4] + 0.7152*d.data[i*4+1] + 0.0722*d.data[i*4+2])/255);
+        d.data[i*4]   = c.r*255*f;
+        d.data[i*4+1] = c.g*255*f;
+        d.data[i*4+2] = c.b*255*f;
+      }
+      cx.putImageData(d, 0, 0);
+    }
+
+    m._tintTex.needsUpdate = true;
+    u.map.value = m._tintTex;
+    if (m.map) m.map = m._tintTex;
+    return true;
+  },
+
+  /* volta a peça ao material original */
+  restoreMap:function(m){
+    if (m._origMap && m.uniforms && m.uniforms.map){
+      m.uniforms.map.value = m._origMap;
+      if (m.map) m.map = m._origMap;
+    }
+  },
+
+  /* o uniforme shadeColor (cor da área sombreada) continua sendo multiplicado,
+     para a sombra acompanhar o tom da peça */
+  tintShade:function(m, hex){
+    var u = m.uniforms;
+    if (!u || !u.shadeColor || !u.shadeColor.value || !u.shadeColor.value.isColor) return;
+    if (!m._baseShade) m._baseShade = u.shadeColor.value.clone();
+    var b = m._baseShade, c = col(hex);
+    u.shadeColor.value.setRGB(b.r*c.r, b.g*c.g, b.b*c.b);
+  },
+
+  tintMaterial:function(m, hex, isOriginal){
+    if (isOriginal){
+      this.restoreMap(m);
+      if (m._baseShade && m.uniforms && m.uniforms.shadeColor)
+        m.uniforms.shadeColor.value.copy(m._baseShade);
+      return;
+    }
+    this.colorizeMap(m, hex);
+    this.tintShade(m, hex);
+  },
+
+  /* repintar uma textura custa alguns milissegundos, então cada peça é
+     tratada isoladamente — o painel só repinta o que o usuário mudou */
+  applyPart:function(key){
+    var vrm = this.vrm;
+    if (!vrm || !vrm._parts) return;
+    var p = null, i;
+    for (i=0;i<PARTS.length;i++) if (PARTS[i].k===key) { p = PARTS[i]; break; }
+    var mats = p && vrm._parts[p.k];
+    if (!mats) return;
+    var pal = PAL[p.pal], idx = (CFG[p.k]|0) % pal.length, self = this;
+    mats.forEach(function(m){ self.tintMaterial(m, pal[idx][1], idx === 0); });
+  },
+
+  applyColors:function(){
+    var self = this;
+    PARTS.forEach(function(p){ self.applyPart(p.k); });
+  },
+
+  /* altura escala o modelo inteiro; porte alarga tronco e quadril */
+  applyBody:function(){
+    var vrm = this.vrm;
+    if (!vrm) return;
+    vrm.scene.scale.setScalar(0.90 + CFG.height*0.20);   /* 0.90x — 1.10x */
+    var w = 0.92 + CFG.build*0.20;                       /* 0.92x — 1.12x */
+    var r = vrm._rest || {};
+    [r.chest, r.spine, r.hips].forEach(function(b){ if (b) b.scale.set(w, 1, w); });
+  },
+
+  applyExpression:function(){
+    var vrm = this.vrm;
+    if (!vrm || !vrm.blendShapeProxy) return;
+    EXPR.forEach(function(e, i){
+      if (!e[1]) return;
+      var name = THREE_VRM.VRMSchema.BlendShapePresetName[e[1]];
+      try { vrm.blendShapeProxy.setValue(name, i === (CFG.expr|0) ? 0.85 : 0); } catch(err){}
+    });
+  },
+
+  applyAll:function(){
+    this.applyColors(); this.applyBody(); this.applyExpression();
   },
 
   /* idle + spring bones; chamado a cada frame pelo Studio */
@@ -1101,7 +1338,7 @@ var Studio = {
    6. UI DO CRIADOR — abas + linhas "◀ VALOR ▶" (§10, §29)
    ------------------------------------------------------------------------- */
 var UI = {
-  dirty:false, cards:[],
+  dirty:false, cards:[], rows:[],
 
   init:function(){
     var self=this, list=$("#cast");
@@ -1109,9 +1346,7 @@ var UI = {
       var b=document.createElement("button");
       b.className="cast-card"; b.type="button";
       b.setAttribute("aria-pressed", i===CFG.character?"true":"false");
-      b.innerHTML = '<span class="cc-n">'+c.label+'</span>'+
-                    '<span class="cc-c">'+c.classe+'</span>'+
-                    '<span class="cc-a">'+c.autor+'</span>';
+      b.innerHTML = '<span class="cc-n">'+c.label+'</span><span class="cc-c">'+c.classe+'</span>';
       b.addEventListener("click", function(){ self.pick(i); });
       list.appendChild(b);
       self.cards.push(b);
@@ -1123,17 +1358,21 @@ var UI = {
         b.setAttribute("aria-pressed", i===idx && state==="ready" ? "true" : "false");
         b.classList.toggle("loading", i===idx && state==="loading");
       });
-      if (state==="loading") st.textContent = "CARREGANDO "+CAST[idx].label+"…";
-      else if (state==="error") st.textContent = "FALHA AO CARREGAR "+CAST[idx].label;
+      if (state==="loading"){ st.textContent = "CARREGANDO "+CAST[idx].label+"…"; }
+      else if (state==="error"){ st.textContent = "FALHA AO CARREGAR "+CAST[idx].label; }
       else {
         st.textContent = CAST[idx].label+" — "+CAST[idx].classe;
+        self.renderRows();
         Studio.fit();
       }
     };
 
-    $("#rand").addEventListener("click", function(){
-      self.pick(Math.floor(Math.random()*CAST.length));
-      toast("PERSONAGEM SORTEADO");
+    $("#rand").addEventListener("click", function(){ self.randomize(); });
+    $("#reset").addEventListener("click", function(){
+      var keep = CFG.character;
+      CFG = Object.assign({}, DEFAULT_CFG); CFG.character = keep;
+      VRMAvatar.applyAll(); self.refresh(); self.dirty = true;
+      toast("APARÊNCIA RESTAURADA");
     });
     $("#saveAvatar").addEventListener("click", function(){ MemCard.saveAvatar(); });
     $("#zin").addEventListener("click", function(){ Studio.zoom(-0.35); Studio.idle=0; });
@@ -1144,9 +1383,7 @@ var UI = {
       Studio.auto = !Studio.auto;
       rot.setAttribute("aria-pressed", Studio.auto?"true":"false");
     });
-    Studio.onDrag = function(){
-      var h=$("#hint"); if (h) h.style.opacity="0";
-    };
+    Studio.onDrag = function(){ var h=$("#hint"); if (h) h.style.opacity="0"; };
 
     /* o Studio já pode ter disparado o primeiro load antes daqui */
     if (VRMAvatar.loading) VRMAvatar.emit("loading", CFG.character);
@@ -1160,9 +1397,102 @@ var UI = {
     Studio.idle = 0;
   },
 
+  /* -------- linhas de customização (◀ VALOR ▶) --------
+     São remontadas a cada troca de personagem porque o conjunto de peças
+     coloríveis varia de um modelo para outro. */
+  renderRows:function(){
+    var self=this, box=$("#rows");
+    box.innerHTML=""; this.rows=[];
+
+    VRMAvatar.availableParts().forEach(function(p){
+      self.rows.push(self.row(box, p.label, {
+        get:function(){ return CFG[p.k]|0; },
+        len:function(){ return PAL[p.pal].length; },
+        set:function(v){ CFG[p.k]=v; VRMAvatar.applyPart(p.k); },
+        text:function(){ return PAL[p.pal][CFG[p.k]|0][0]; },
+        swatch:function(){ return PAL[p.pal][CFG[p.k]|0][1]; }
+      }));
+    });
+
+    self.rows.push(self.row(box, "EXPRESSÃO", {
+      get:function(){ return CFG.expr|0; },
+      len:function(){ return EXPR.length; },
+      set:function(v){ CFG.expr=v; VRMAvatar.applyExpression(); },
+      text:function(){ return EXPR[CFG.expr|0][0]; }
+    }));
+
+    ["height","build"].forEach(function(k,i){
+      self.rows.push(self.row(box, i?"PORTE":"ALTURA", {
+        range:true,
+        get:function(){ return CFG[k]; },
+        set:function(v){ CFG[k]=v; VRMAvatar.applyBody(); Studio.fit(); },
+        text:function(){ return Math.round(CFG[k]*100)+"%"; }
+      }));
+    });
+  },
+
+  row:function(parent, name, spec){
+    var el=document.createElement("div"); el.className="row";
+    var nm=document.createElement("span"); nm.className="rn"; nm.textContent=name;
+
+    var prev=document.createElement("button"); prev.className="arw"; prev.type="button";
+    prev.innerHTML="&#9664;"; prev.setAttribute("aria-label","anterior "+name);
+    var next=document.createElement("button"); next.className="arw"; next.type="button";
+    next.innerHTML="&#9654;"; next.setAttribute("aria-label","próximo "+name);
+
+    var val=document.createElement("div"); val.className="rv";
+    var sw=null;
+    if (spec.swatch){ sw=document.createElement("span"); sw.className="sw"; val.appendChild(sw); }
+    var txt=document.createElement("span"); val.appendChild(txt);
+    var bar=null;
+    if (spec.range){
+      bar=document.createElement("i"); bar.className="rbar";
+      var fill=document.createElement("b"); bar.appendChild(fill); val.appendChild(bar);
+      bar._fill = fill;
+    }
+
+    function refresh(anim){
+      txt.textContent = spec.text();
+      if (sw) sw.style.background = spec.swatch();
+      if (bar) bar._fill.style.width = (spec.get()*100)+"%";
+      if (anim){ val.classList.remove("anim"); void val.offsetWidth; val.classList.add("anim"); }
+    }
+    function step(dir){
+      if (spec.range) spec.set(clamp(Math.round((spec.get()+dir*0.1)*10)/10, 0, 1));
+      else { var n=spec.len(); spec.set((spec.get()+dir+n)%n); }
+      refresh(true); UI.dirty=true; Studio.idle=0;
+    }
+    prev.addEventListener("click", function(){ step(-1); });
+    next.addEventListener("click", function(){ step(1); });
+
+    el.appendChild(nm); el.appendChild(prev); el.appendChild(val); el.appendChild(next);
+    parent.appendChild(el);
+    refresh();
+    return refresh;
+  },
+
   refresh:function(){
     var i=CFG.character;
     this.cards.forEach(function(b,k){ b.setAttribute("aria-pressed", k===i?"true":"false"); });
+    this.rows.forEach(function(fn){ fn(); });
+  },
+
+  /* combinação aleatória: personagem atual, aparência sorteada */
+  randomize:function(){
+    var pal;
+    PARTS.forEach(function(p){
+      pal = PAL[p.pal];
+      /* pele muda pouco: metade das vezes fica no original */
+      CFG[p.k] = (p.k==="skin" && Math.random()<0.5) ? 0 : Math.floor(Math.random()*pal.length);
+    });
+    CFG.expr   = Math.random()<0.5 ? 0 : Math.floor(Math.random()*EXPR.length);
+    CFG.height = Math.round(Math.random()*10)/10;
+    CFG.build  = Math.round((0.2+Math.random()*0.6)*10)/10;
+    VRMAvatar.applyAll();
+    Studio.fit();
+    this.refresh();
+    this.dirty = true;
+    toast("APARÊNCIA ALEATÓRIA");
   }
 };
 
@@ -1175,8 +1505,12 @@ var MemCard = {
   payload:function(){
     /* estrutura salva — pronta para associar a um convidado (§14) */
     return {
-      v:2, guestId:GUEST, name:(Store.get(KEY_RS)||{}).name || null,
-      avatar:{ character: CAST[CFG.character].id },
+      v:3, guestId:GUEST, name:(Store.get(KEY_RS)||{}).name || null,
+      avatar:{
+        character: CAST[CFG.character].id,
+        hair:CFG.hair, tops:CFG.tops, bottom:CFG.bottom, shoes:CFG.shoes, neck:CFG.neck,
+        eyes:CFG.eyes, skin:CFG.skin, height:CFG.height, build:CFG.build, expr:CFG.expr
+      },
       savedAt:new Date().toISOString()
     };
   },
@@ -1189,6 +1523,8 @@ var MemCard = {
   load:function(){
     var d = Store.get(KEY_AV);
     if (!d || !d.avatar) return false;
+    var k;
+    for (k in d.avatar) if (k in CFG && k !== "character") CFG[k] = d.avatar[k];
     CFG.character = castIndexById(d.avatar.character);
     return true;
   },
@@ -1488,8 +1824,9 @@ var Flow = {
      de fora (ex.: PS2CONVITE.set("citrine") ou PS2CONVITE.Studio.cam) */
   window.PS2CONVITE = {
     Studio:Studio, Avatar:VRMAvatar, UI:UI, Flow:Flow, MemCard:MemCard,
-    CFG:CFG, CAST:CAST,
-    set:function(id){ UI.pick(typeof id==="number" ? id : castIndexById(id)); }
+    CFG:CFG, CAST:CAST, PARTS:PARTS, PAL:PAL,
+    set:function(id){ UI.pick(typeof id==="number" ? id : castIndexById(id)); },
+    tint:function(part,i){ CFG[part]=i; VRMAvatar.applyColors(); UI.refresh(); }
   };
   if (loaded) setTimeout(function(){ toast("AVATAR CARREGADO DO MEMORY CARD"); }, 5200);
 })();
