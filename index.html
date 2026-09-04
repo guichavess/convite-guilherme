@@ -395,7 +395,9 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
 .panel-head b{font-family:"Barlow Condensed",sans-serif;font-weight:400;font-size:14px;
   letter-spacing:.28em;color:var(--chrome)}
 .panel-head #castStatus{font-size:11px;letter-spacing:.18em;color:var(--cyan);min-height:14px}
-.cast{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px;flex:0 0 auto}
+/* o elenco cresce; limita a altura para não espremer as linhas de customização */
+.cast{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 16px;
+  flex:0 1 auto;max-height:30vh;overflow-y:auto;scrollbar-width:thin}
 .cast-card{
   position:relative;display:flex;flex-direction:column;gap:2px;align-items:flex-start;
   padding:10px 11px;border:1px solid var(--line);background:rgba(10,24,60,.42);
@@ -517,7 +519,8 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
     </div>
     <div class="cast" id="cast"></div>
     <div class="rows" id="rows"></div>
-    <p class="cast-credit">modelos VRM de exemplo do <b>VRoid Studio</b> — CC0</p>
+    <p class="cast-credit">modelos VRM de exemplo do <b>VRoid Studio</b> — CC0, exceto
+      AOI/HARU/KENTA (amostras oficiais da <b>pixiv</b>, uso livre)</p>
     <div class="pacts">
       <button class="pbtn" id="reset" type="button">RESET</button>
       <button class="pbtn" id="rand" type="button">ALEATÓRIO</button>
@@ -734,8 +737,10 @@ var Store = {
 };
 
 /* ========================= 2. ELENCO E CATÁLOGO ==========================
-   Os personagens são os modelos de exemplo do VRoid Studio, publicados em
-   CC0 (domínio público). Todos exportam material separado por parte, com
+   Os personagens são os modelos de exemplo do VRoid Studio. Nove estão em
+   CC0 (domínio público); AOI, HARU e KENTA são as amostras oficiais da pixiv
+   (licenseName "Other"), que permitem uso, modificação e redistribuição sem
+   abrir mão do copyright. Todos exportam material separado por parte, com
    nomenclatura estável (…_HAIR, …Tops_01_CLOTH, …EyeIris_00_EYE, …_SKIN),
    que é justamente o que permite recolorir cada peça de forma independente.
    Otimizados para web: texturas 512px + poda de blendshapes não usados
@@ -747,7 +752,13 @@ var CAST = [
   { id:"fumiriya", label:"FUMIRIYA", classe:"Sakurada",  url:"assets/avatars/fumiriya.vrm" },
   { id:"victoria", label:"VICTORIA", classe:"Rubin",     url:"assets/avatars/victoria.vrm" },
   { id:"vita",     label:"VITA",     classe:"VRoid",     url:"assets/avatars/vita.vrm" },
-  { id:"vivi",     label:"VIVI",     classe:"VRoid",     url:"assets/avatars/vivi.vrm" }
+  { id:"vivi",     label:"VIVI",     classe:"VRoid",     url:"assets/avatars/vivi.vrm" },
+  { id:"aoi",      label:"AOI",      classe:"Studio",    url:"assets/avatars/aoi.vrm" },
+  { id:"haru",     label:"HARU",     classe:"Studio",    url:"assets/avatars/haru.vrm" },
+  { id:"kenta",    label:"KENTA",    classe:"Studio",    url:"assets/avatars/kenta.vrm" },
+  { id:"noir",     label:"NOIR",     classe:"Darkness",  url:"assets/avatars/noir.vrm" },
+  { id:"mika",     label:"MIKA",     classe:"Amostra",   url:"assets/avatars/mika.vrm" },
+  { id:"ren",      label:"REN",      classe:"Amostra",   url:"assets/avatars/ren.vrm" }
 ];
 
 /* Peças coloríveis. `test` casa com o nome do material do VRM; a peça some
