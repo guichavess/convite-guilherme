@@ -423,6 +423,9 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
 .row{display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:3px;
   border:1px solid transparent}
 .row:hover{border-color:var(--line);background:rgba(122,212,255,.05)}
+/* linhas de origem da peça (transplante) — mesma métrica, outro tom */
+.row.org .rn{color:#a58bd8}
+.row.org .rv{color:#e6ddff}
 .row .rn{flex:0 0 84px;font-size:9.5px;letter-spacing:.2em;color:#7b9fcd}
 .row .rv{
   flex:1;position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
@@ -679,6 +682,7 @@ footer{margin-top:40px;text-align:center;font-size:10px;letter-spacing:.3em;colo
      1. CONFIG / util / persistência (localStorage + suporte a ?guest=)
      2. CATÁLOGO DE OPÇÕES (schema do criador de personagem)
      3. GEOMETRIA — helpers de loft/tubo/shell (nada de Box/Cylinder no corpo)
+     3.5 TRANSPLANTE DE PARTES — peça de um modelo montada no esqueleto de outro
      4. AVATAR — construtores modulares por slot
      5. STUDIO — cena, luzes, plataforma, câmera orbital
      6. UI — abas, linhas com setas, randomize, save
@@ -774,6 +778,25 @@ var PARTS = [
   { k:"skin",   label:"PELE",    test:/_SKIN(_|$)/i,              pal:"skin" }
 ];
 
+/* Peças transplantáveis — a unidade de troca entre modelos (seção 3.5).
+   É uma tabela separada de PARTS de propósito: PARTS agrupa *materiais* para
+   recolorir, PECAS agrupa *malhas* para mostrar/esconder, e os dois recortes
+   não coincidem. "PELE" é uma cor só, mas rosto e corpo são malhas distintas
+   (Face/Body) e precisam poder vir de modelos diferentes; já os materiais de
+   traço do rosto (eyeline, cílios, sobrancelha, boca) não têm cor própria no
+   painel, mas têm de viajar junto com o rosto.
+   `mesh` casa com o nome do material da malha; `cor` diz qual linha de PARTS
+   pinta essa peça — é por ele que a recoloração encontra o modelo doador. */
+var PECAS = [
+  { k:"hair",   label:"CABELO",  cor:"hair",   mesh:/_HAIR/i },
+  { k:"tops",   label:"BLUSA",   cor:"tops",   mesh:/Tops_\d+_CLOTH/i },
+  { k:"bottom", label:"CALÇA",   cor:"bottom", mesh:/Bottoms_\d+_CLOTH/i },
+  { k:"shoes",  label:"CALÇADO", cor:"shoes",  mesh:/Shoes_\d+_CLOTH/i },
+  { k:"neck",   label:"GOLA",    cor:"neck",   mesh:/AccessoryNeck_\d+_CLOTH/i },
+  { k:"face",   label:"ROSTO",   cor:"eyes",   mesh:/_FACE|EyeIris|EyeWhite|EyeHighlight|EyeExtra|Face_\d+_SKIN/i },
+  { k:"body",   label:"CORPO",   cor:"skin",   mesh:/Body_\d+_SKIN/i }
+];
+
 /* As paletas multiplicam a textura original — por isso o primeiro item é
    sempre "original" (branco = sem alteração) e os tons escuros respondem
    melhor que os claros. */
@@ -803,6 +826,8 @@ var DEFAULT_CFG = {
   hair:0, tops:0, bottom:0, shoes:0, neck:0, eyes:0, skin:0,
   height:0.5, build:0.5, expr:0
 };
+/* origem de cada peça: -1 = do próprio personagem, senão índice em CAST */
+PECAS.forEach(function(p){ DEFAULT_CFG["de_"+p.k] = -1; });
 var CFG = Object.assign({}, DEFAULT_CFG);
 
 function castIndexById(id){
@@ -827,6 +852,9 @@ function col(hex){ var c = new THREE.Color(hex); if (c.convertSRGBToLinear) c.co
 var VRMAvatar = {
   root:null, vrm:null, cache:{}, loading:false, index:-1, ready:false,
   onstate:null,          /* callback de UI: ("loading"|"ready"|"error", idx) */
+  pendentes:{},          /* id -> lista de callbacks (evita carregar 2x) */
+  lru:[],                /* ids por ordem de uso, o mais antigo primeiro */
+  LIMITE_CACHE:5,        /* modelos residentes; os fora de cena são descartados */
 
   create:function(){
     this.root = new THREE.Group();
@@ -835,43 +863,93 @@ var VRMAvatar = {
 
   emit:function(state, idx){ if (this.onstate) this.onstate(state, idx); },
 
-  /* carrega (ou reusa) o personagem CAST[i] */
-  select:function(i, cb){
-    var self = this;
-    i = ((i % CAST.length) + CAST.length) % CAST.length;
-    CFG.character = i;
-    if (this.index === i && this.vrm) { if (cb) cb(this.vrm); return; }
+  /* Carrega (ou reusa) CAST[i] sem mexer na cena. É o ponto de entrada tanto
+     da troca de personagem quanto do transplante de peças, que precisa de um
+     doador carregado em memória sem montá-lo como avatar principal.
+     cb(vrm) em sucesso, cb(null) em falha — nunca lança. */
+  load:function(i, cb){
+    var self = this, entry = CAST[i];
+    var pronto = this.cache[entry.id];
+    if (pronto){ this.tocar(entry.id); if (cb) cb(pronto); return; }
+    if (!HASVRM){ if (cb) cb(null); return; }
+    if (this.pendentes[entry.id]){ this.pendentes[entry.id].push(cb); return; }
+    this.pendentes[entry.id] = [cb];
 
-    var entry = CAST[i];
-    if (this.cache[entry.id]) { this.mount(this.cache[entry.id], i); if (cb) cb(this.vrm); return; }
-    if (!HASVRM) { this.emit("error", i); return; }
-
-    this.loading = true;
-    this.emit("loading", i);
+    var termina = function(vrm){
+      var fila = self.pendentes[entry.id] || [];
+      delete self.pendentes[entry.id];
+      fila.forEach(function(f){ if (f) f(vrm); });
+    };
     var loader = new THREE.GLTFLoader();
     loader.crossOrigin = "anonymous";
     loader.load(entry.url, function(gltf){
       THREE_VRM.VRM.from(gltf).then(function(vrm){
         THREE_VRM.VRMUtils.removeUnnecessaryJoints(vrm.scene);
+        vrm._id = entry.id;
         self.prepare(vrm);
         self.cache[entry.id] = vrm;
-        self.mount(vrm, i);
-        self.loading = false;
-        if (cb) cb(vrm);
+        self.tocar(entry.id);
+        termina(vrm);
       }).catch(function(err){
-        self.loading = false; self.emit("error", i);
         if (window.console) console.warn("VRM parse falhou:", entry.url, err);
+        termina(null);
       });
     }, null, function(err){
-      self.loading = false; self.emit("error", i);
       if (window.console) console.warn("VRM não carregou:", entry.url, err);
+      termina(null);
     });
+  },
+
+  /* carrega (ou reusa) o personagem CAST[i] e o monta na cena */
+  select:function(i, cb){
+    var self = this;
+    i = ((i % CAST.length) + CAST.length) % CAST.length;
+    CFG.character = i;
+    if (this.index === i && this.vrm) { if (cb) cb(this.vrm); return; }
+    if (!HASVRM) { this.emit("error", i); return; }
+
+    if (this.cache[CAST[i].id]) { this.mount(this.cache[CAST[i].id], i); if (cb) cb(this.vrm); return; }
+
+    this.loading = true;
+    this.emit("loading", i);
+    this.load(i, function(vrm){
+      self.loading = false;
+      if (!vrm){ self.emit("error", i); if (cb) cb(null); return; }
+      /* o usuário pode ter trocado de personagem enquanto isto carregava */
+      if (CFG.character !== i){ if (cb) cb(vrm); return; }
+      self.mount(vrm, i);
+      if (cb) cb(vrm);
+    });
+  },
+
+  /* --------- cache com descarte (ver 3.5: memória de GPU) ---------
+     Marca o modelo como recém-usado e poda os mais antigos que não estejam
+     em cena. Sem isto, passear pelos 12 personagens deixa 12 VRM inteiros
+     (geometria + texturas) residentes na GPU até a aba ser fechada. */
+  tocar:function(id){
+    var k = this.lru.indexOf(id);
+    if (k >= 0) this.lru.splice(k, 1);
+    this.lru.push(id);
+    this.podar();
+  },
+
+  podar:function(){
+    var self = this, emUso = (typeof Transplante !== "undefined") ? Transplante.emUso() : {};
+    if (this.vrm && this.vrm._id) emUso[this.vrm._id] = true;
+    var i = 0;
+    while (this.lru.length > this.LIMITE_CACHE && i < this.lru.length){
+      var id = this.lru[i];
+      if (emUso[id] || !this.cache[id]) { i++; continue; }
+      disposeVRM(this.cache[id]);
+      delete this.cache[id];
+      this.lru.splice(i, 1);
+    }
   },
 
   /* varre a cena uma vez: corrige encoding, esconde colliders e indexa os
      materiais por peça — é esse índice que a customização usa depois */
   prepare:function(vrm){
-    var parts = {};
+    var parts = {}, malhas = {};
     vrm.scene.traverse(function(o){
       if (!o.isMesh) return;
       /* esferas de colisão dos spring bones vêm visíveis no VRM 0.x */
@@ -894,25 +972,58 @@ var VRMAvatar = {
           break;
         }
       });
+      /* mesma varredura indexa a malha por peça transplantável — o VRoid
+         explode cada primitiva em uma SkinnedMesh própria, então mostrar ou
+         esconder uma peça é mexer em `visible`, sem tocar em geometria */
+      var nome = (mats[0] && mats[0].name) || "";
+      for (var j=0;j<PECAS.length;j++){
+        if (!PECAS[j].mesh.test(nome)) continue;
+        o._pai = o.parent;    /* para poder tirar e repor a malha no grafo */
+        (malhas[PECAS[j].k] = malhas[PECAS[j].k] || []).push(o);
+        break;
+      }
     });
     vrm._parts = parts;
+    vrm._malhas = malhas;
+    /* índice osso humanoid -> nó, usado no retargeting da seção 3.5 */
+    var ossos = {}, self = this;
+    OSSOS_HUMANOID.forEach(function(n){ var b = self.bone(vrm, n); if (b) ossos[n] = b; });
+    vrm._ossos = ossos;
     vrm.scene.rotation.y = Math.PI;   /* VRM olha para -Z; a câmera está em +Z */
     this.restPose(vrm);
   },
 
   mount:function(vrm, i){
+    /* os doadores são filhos da cena do personagem atual: soltá-los antes de
+       trocar a base evita que sumam junto com ela (e que o próximo base seja
+       montado dentro de si mesmo, caso ele estivesse doando uma peça) */
+    Transplante.soltarTodos();
     if (this.vrm && this.vrm.scene.parent) this.root.remove(this.vrm.scene);
     this.vrm = vrm; this.index = i; this.ready = true;
+    this.tocar(vrm._id);
     this.root.add(vrm.scene);
+    /* reanexa (e carrega, se vier de um save) os doadores das peças */
+    Transplante.garantir(function(){ if (UI.rows.length) UI.renderRows(); });
     this.applyAll();
     this.emit("ready", i);
   },
 
-  /* quais peças este personagem realmente tem */
+  /* Quais peças coloríveis estão em cena. Uma peça pode vir de um doador, e
+     por isso a pergunta é feita a quem fornece a peça, não ao personagem
+     base — a Victoria não tem "Bottoms", mas passa a ter se pegar a calça
+     emprestada de outro modelo. */
   availableParts:function(){
-    var p = this.vrm && this.vrm._parts, out = [];
-    if (!p) return out;
-    for (var i=0;i<PARTS.length;i++) if (p[PARTS[i].k] && p[PARTS[i].k].length) out.push(PARTS[i]);
+    var out = [];
+    if (!this.vrm) return out;
+    PARTS.forEach(function(p){
+      var tem = PECAS.some(function(pc){
+        if (pc.cor !== p.k) return false;
+        var fonte = Transplante.fonte(pc.k);
+        return !!(fonte && fonte._parts[p.k] && fonte._parts[p.k].length &&
+                  fonte._malhas[pc.k] && fonte._malhas[pc.k].length);
+      });
+      if (tem) out.push(p);
+    });
     return out;
   },
 
@@ -1041,14 +1152,23 @@ var VRMAvatar = {
   /* repintar uma textura custa alguns milissegundos, então cada peça é
      tratada isoladamente — o painel só repinta o que o usuário mudou */
   applyPart:function(key){
-    var vrm = this.vrm;
-    if (!vrm || !vrm._parts) return;
-    var p = null, i;
+    if (!this.vrm) return;
+    var p = null, i, self = this;
     for (i=0;i<PARTS.length;i++) if (PARTS[i].k===key) { p = PARTS[i]; break; }
-    var mats = p && vrm._parts[p.k];
-    if (!mats) return;
-    var pal = PAL[p.pal], idx = (CFG[p.k]|0) % pal.length, self = this;
-    mats.forEach(function(m){ self.tintMaterial(m, pal[idx][1], idx === 0); });
+    if (!p) return;
+    var pal = PAL[p.pal], idx = (CFG[p.k]|0) % pal.length;
+    /* a peça pode ter vindo de outro modelo: pinta o material de quem está
+       de fato em cena, e só dele (repintar textura custa milissegundos) */
+    var feitos = [];
+    PECAS.forEach(function(pc){
+      if (pc.cor !== p.k) return;
+      var fonte = Transplante.fonte(pc.k);
+      if (!fonte || feitos.indexOf(fonte) >= 0) return;
+      feitos.push(fonte);
+      var mats = fonte._parts && fonte._parts[p.k];
+      if (!mats) return;
+      mats.forEach(function(m){ self.tintMaterial(m, pal[idx][1], idx === 0); });
+    });
   },
 
   applyColors:function(){
@@ -1066,8 +1186,11 @@ var VRMAvatar = {
     [r.chest, r.spine, r.hips].forEach(function(b){ if (b) b.scale.set(w, 1, w); });
   },
 
+  /* a expressão vive nos blendshapes do rosto — que pode ser de outro modelo */
+  rosto:function(){ return Transplante.fonte("face") || this.vrm; },
+
   applyExpression:function(){
-    var vrm = this.vrm;
+    var vrm = this.rosto();
     if (!vrm || !vrm.blendShapeProxy) return;
     EXPR.forEach(function(e, i){
       if (!e[1]) return;
@@ -1097,15 +1220,20 @@ var VRMAvatar = {
       if (r.hips) r.hips.position.y = r.hipsY + Math.sin(t*1.15)*0.006;
     }
     /* piscada: pálpebras fechadas ~120ms a cada 3–6 s */
-    if (vrm.blendShapeProxy && !reduce){
+    var face = this.rosto();
+    if (face && face.blendShapeProxy && !reduce){
       this._blinkIn = (this._blinkIn == null ? 2 : this._blinkIn) - dt;
       if (this._blinkIn <= 0){ this._blinkIn = 3 + Math.random()*3; this._blinkUntil = t + 0.12; }
       var closed = this._blinkUntil != null && t < this._blinkUntil ? 1 : 0;
-      if (closed !== this._blinkState){
-        vrm.blendShapeProxy.setValue(THREE_VRM.VRMSchema.BlendShapePresetName.Blink, closed);
-        this._blinkState = closed;
+      if (closed !== this._blinkState || face !== this._blinkFace){
+        face.blendShapeProxy.setValue(THREE_VRM.VRMSchema.BlendShapePresetName.Blink, closed);
+        this._blinkState = closed; this._blinkFace = face;
       }
     }
+    /* a pose dos doadores é copiada da base depois do idle e antes do
+       vrm.update deles, para que os spring bones do cabelo emprestado
+       reajam ao mesmo movimento do corpo */
+    Transplante.sincronizar(dt, reduce);
     vrm.update(dt);
   },
 
@@ -1117,6 +1245,316 @@ var VRMAvatar = {
     return (isFinite(h) && h > 0.2) ? h : 1.5;
   }
 };
+
+/* ========================= 3.5 TRANSPLANTE DE PARTES =====================
+   Monta a peça de um modelo no esqueleto de outro (cabelo da VIVI no corpo do
+   KENTA com a blusa da SHINO, por exemplo).
+
+   POR QUE ASSIM — a auditoria dos 12 VRM (script em docs/, resultado na
+   tabela de compatibilidade) mostrou três fatos que decidem o desenho:
+     · os 12 têm exatamente os mesmos 54 ossos humanoid, com os mesmos nomes;
+     · a bind pose é rotação identidade em todos — a inverse bind matrix é
+       translação pura, ou seja, os esqueletos diferem só em *posição* de
+       osso, nunca em orientação;
+     · normalizadas pela altura, as proporções são praticamente iguais
+       (largura de ombro/altura varia 0,029–0,032 entre os 12), mas a altura
+       absoluta varia 41% (VIVI 1,19 m contra FUMIRIYA 1,68 m) enquanto a
+       cabeça é quase constante (bbox do rosto 0,212–0,244).
+
+   Daí a escolha: NÃO reordenamos `bones[]` nem mexemos em `skinIndex`. Em vez
+   disso o VRM doador inteiro entra na cena como filho do personagem base, com
+   as malhas escondidas menos a da peça emprestada, e a cada frame os 54 ossos
+   humanoid do doador recebem a transformação local do osso de mesmo nome da
+   base. O esqueleto do doador vira, geometricamente, o esqueleto da base:
+     · a roupa acompanha a altura e o porte do alvo sem escala global —
+       o ajuste é por osso, o que é mais correto que um fator único;
+     · o cabelo, cujos ossos ficam abaixo de Head e não são humanoid, mantém
+       o tamanho com que foi modelado (a cabeça é constante entre modelos,
+       então não precisa de correção de escala);
+     · os spring bones do doador continuam sendo os dele, atualizados pelo
+       vrm.update() dele — o cabelo emprestado balança de verdade;
+     · nenhum buffer de geometria é tocado, então trocar peça é O(1) e a
+       troca de volta é instantânea.
+   O custo é manter até 3 esqueletos extras vivos (≈150 nós cada, invisíveis):
+   irrelevante perto de um único draw call a mais.
+
+   Débitos técnicos aceitos, explícitos:
+     · o doador só existe uma vez em memória, então a mesma peça não pode ser
+       usada duas vezes com poses diferentes (não é caso de uso aqui);
+     · roupa modelada para um corpo muito mais largo pode interpenetrar a
+       pele do alvo — não há simulação de colisão de tecido;
+     · rosto e corpo são peças separadas: trocar só o rosto mantém o pescoço
+       do alvo, e uma diferença grande de tom de pele fica visível na emenda
+       (a linha PELE do painel repinta os dois de uma vez, o que resolve).
+   ======================================================================== */
+
+/* nomes dos ossos humanoid do VRM 0.x — a base do retargeting por nome */
+var OSSOS_HUMANOID = (function(){
+  try { return Object.keys(THREE_VRM.VRMSchema.HumanoidBoneName); }
+  catch(e){ return []; }
+})();
+
+/* Libera a memória de GPU de um VRM inteiro. WebGL não coleta lixo sozinho:
+   geometria, textura e programa ficam residentes até alguém chamar dispose.
+   Inclui as texturas de recoloração criadas em colorizeMap. */
+function disposeVRM(vrm){
+  if (!vrm || !vrm.scene) return;
+  /* repõe no grafo as peças que estavam destacadas, senão elas escapam da
+     varredura abaixo e ficam na GPU */
+  mostrarMalhas(vrm, null);
+  var vistos = [];
+  function soltaTextura(t){
+    if (t && t.isTexture && vistos.indexOf(t) < 0){ vistos.push(t); t.dispose(); }
+  }
+  var esqueletos = [];
+  vrm.scene.traverse(function(o){
+    if (o.geometry) o.geometry.dispose();
+    /* o Skeleton carrega uma textura de ossos própria na GPU e não sai pelo
+       material — sem este dispose sobravam 2 texturas por modelo trocado */
+    if (o.isSkinnedMesh && o.skeleton && esqueletos.indexOf(o.skeleton) < 0){
+      esqueletos.push(o.skeleton);
+      if (o.skeleton.dispose) o.skeleton.dispose();
+    }
+    var mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
+    mats.forEach(function(m){
+      /* varre *todas* as propriedades e uniforms à procura de textura: o MToon
+         guarda mapa em uniforms e em propriedade, e uma lista fixa de nomes
+         deixava ~2/3 das texturas de cada modelo residentes na GPU */
+      var k;
+      for (k in m) { try { soltaTextura(m[k]); } catch(e){} }
+      if (m.uniforms) for (k in m.uniforms) {
+        try { soltaTextura(m.uniforms[k] && m.uniforms[k].value); } catch(e){}
+      }
+      m._tint = m._tintTex = m._origMap = null;
+      if (m.dispose) m.dispose();
+    });
+  });
+  if (vrm.dispose) { try { vrm.dispose(); } catch(e){} }
+}
+
+var Transplante = {
+  doadores:{},   /* id -> { vrm:, pares:[[osso base, osso doador], …] } */
+  carregando:0,
+  onstate:null,  /* callback de UI: ("loading"|"ready") */
+
+  /* índice em CAST escolhido para a peça (-1 = do próprio personagem) */
+  escolha:function(k){
+    var i = CFG["de_"+k];
+    return (i == null || i < 0 || i >= CAST.length || i === CFG.character) ? -1 : i;
+  },
+
+  /* quem fornece a peça k agora. Enquanto o doador não terminou de carregar
+     — ou se falhou — a resposta é o próprio personagem: a cena nunca fica
+     sem a peça por causa de rede. */
+  fonte:function(k){
+    var base = VRMAvatar.vrm, i = this.escolha(k);
+    if (i < 0 || !base) return base;
+    var d = this.doadores[CAST[i].id];
+    return (d && d.vrm) ? d.vrm : base;
+  },
+
+  /* ids que não podem ser podados do cache (estão em cena) */
+  emUso:function(){
+    var out = {}, id, self = this;
+    for (id in this.doadores) out[id] = true;
+    /* protege também quem foi *escolhido* mas ainda não está anexado: durante
+       a troca de personagem os doadores são soltos e reanexados, e sem isto a
+       poda descartaria no intervalo justo o modelo que vai voltar */
+    PECAS.forEach(function(p){
+      var i = self.escolha(p.k);
+      if (i >= 0) out[CAST[i].id] = true;
+    });
+    return out;
+  },
+
+  vrmsAtivos:function(){
+    var out = VRMAvatar.vrm ? [VRMAvatar.vrm] : [], id;
+    for (id in this.doadores) if (this.doadores[id].vrm) out.push(this.doadores[id].vrm);
+    return out;
+  },
+
+  /* ---- API do painel: escolher a origem de uma peça ---- */
+  definir:function(k, idx, cb){
+    CFG["de_"+k] = idx;
+    this.garantir(cb);
+  },
+
+  /* carrega os doadores que faltam e remonta quando todos chegarem */
+  garantir:function(cb){
+    var self = this, faltam = [], vistos = {};
+    PECAS.forEach(function(p){
+      var i = self.escolha(p.k);
+      if (i < 0) return;
+      var id = CAST[i].id;
+      if (vistos[id] || self.doadores[id]) return;
+      vistos[id] = true; faltam.push(i);
+    });
+    if (!faltam.length){ this.remontar(); if (cb) cb(); return; }
+
+    var restam = faltam.length;
+    this.carregando += restam;
+    if (this.onstate) this.onstate("loading");
+    faltam.forEach(function(i){
+      VRMAvatar.load(i, function(vrm){
+        self.carregando--;
+        if (vrm) self.doadores[CAST[i].id] = { vrm:vrm, pares:null };
+        else {
+          /* degrada sem quebrar: a peça volta a ser a do próprio personagem */
+          PECAS.forEach(function(p){ if (CFG["de_"+p.k] === i) CFG["de_"+p.k] = -1; });
+          if (window.console) console.warn("Transplante: doador não carregou:", CAST[i].id);
+        }
+        if (--restam === 0){
+          self.remontar();
+          if (self.onstate) self.onstate("ready");
+          if (cb) cb();
+        }
+      });
+    });
+  },
+
+  /* ---- montagem ---- */
+
+  /* põe o doador na cena do personagem base. A cena do doador entra zerada:
+     a rotação de 180° e a escala de altura são as da base, herdadas. */
+  anexar:function(d){
+    var base = VRMAvatar.vrm;
+    if (!base || !d.vrm || d.vrm === base) return;
+    var s = d.vrm.scene;
+    s.position.set(0,0,0); s.rotation.set(0,0,0); s.quaternion.identity(); s.scale.setScalar(1);
+    if (s.parent !== base.scene) base.scene.add(s);
+    d.pares = this.mapearOssos(base, d.vrm);
+    this.sincronizarUm(d, 0);
+    base.scene.updateMatrixWorld(true);
+    /* sem o reset o cabelo emprestado entra em cena "chicoteando", porque os
+       spring bones ainda guardam a posição de onde o modelo estava antes */
+    try { if (d.vrm.springBoneManager) d.vrm.springBoneManager.reset(); } catch(e){}
+  },
+
+  /* pares osso-a-osso por nome humanoid; ossos ausentes são ignorados */
+  mapearOssos:function(base, doador){
+    var pares = [];
+    OSSOS_HUMANOID.forEach(function(n){
+      var a = base._ossos && base._ossos[n], b = doador._ossos && doador._ossos[n];
+      if (a && b) pares.push([a, b]);
+    });
+    if (!pares.length && window.console)
+      console.warn("Transplante: nenhum osso em comum com", doador._id);
+    return pares;
+  },
+
+  soltar:function(id){
+    var d = this.doadores[id];
+    if (!d) return;
+    if (d.vrm){
+      if (d.vrm.scene.parent) d.vrm.scene.parent.remove(d.vrm.scene);
+      d.vrm.scene.rotation.y = Math.PI;   /* estado de personagem principal */
+      mostrarMalhas(d.vrm, null);         /* volta a exibir tudo */
+    }
+    delete this.doadores[id];
+  },
+
+  soltarTodos:function(){
+    var id;
+    for (id in this.doadores) this.soltar(id);
+  },
+
+  /* Recalcula quem está em cena e o que cada um mostra. É idempotente: pode
+     ser chamada a cada troca de peça, de personagem ou de save carregado. */
+  remontar:function(){
+    var base = VRMAvatar.vrm, self = this, id;
+    if (!base) return;
+
+    /* 1. dispensa doadores que não são mais usados por nenhuma peça */
+    var precisa = {};
+    PECAS.forEach(function(p){
+      var i = self.escolha(p.k);
+      if (i >= 0) precisa[CAST[i].id] = true;
+    });
+    for (id in this.doadores) if (!precisa[id]) this.soltar(id);
+
+    /* 2. garante os que faltam anexados (os carregados; os demais chegam
+       depois, por garantir()) */
+    for (id in precisa){
+      if (!this.doadores[id] && VRMAvatar.cache[id]) this.doadores[id] = { vrm:VRMAvatar.cache[id], pares:null };
+      if (this.doadores[id] && this.doadores[id].vrm.scene.parent !== base.scene) this.anexar(this.doadores[id]);
+    }
+
+    /* 3. visibilidade: cada peça aparece só no modelo que a fornece */
+    var porVrm = [];
+    this.vrmsAtivos().forEach(function(v){ porVrm.push({ vrm:v, mostrar:{} }); });
+    PECAS.forEach(function(p){
+      var fonte = self.fonte(p.k);
+      porVrm.forEach(function(e){ e.mostrar[p.k] = (e.vrm === fonte); });
+    });
+    porVrm.forEach(function(e){ mostrarMalhas(e.vrm, e.mostrar); });
+
+    VRMAvatar.podar();
+    VRMAvatar.applyColors();
+    /* o rosto pode ter mudado de modelo: reaplica a expressão nele e apaga a
+       do anterior, que ficaria congelada com a última piscada */
+    this.vrmsAtivos().forEach(function(v){
+      if (!v.blendShapeProxy) return;
+      try {
+        EXPR.forEach(function(e){
+          if (e[1]) v.blendShapeProxy.setValue(THREE_VRM.VRMSchema.BlendShapePresetName[e[1]], 0);
+        });
+        v.blendShapeProxy.setValue(THREE_VRM.VRMSchema.BlendShapePresetName.Blink, 0);
+      } catch(err){}
+    });
+    VRMAvatar._blinkState = 0;
+    VRMAvatar.applyExpression();
+  },
+
+  /* ---- por frame ----
+     Copiar a pose é barato (0,02 ms para 3 doadores medido no Chrome); o caro
+     é a física dos spring bones — 1,2 ms por doador, porque o VRM roda os
+     grupos do modelo inteiro, inclusive os do cabelo que está escondido.
+     Por isso o doador só recebe física quando é ele que empresta o cabelo,
+     que é a peça em que o balanço aparece; roupa emprestada acompanha o osso,
+     rígida. Em mobile a física do doador roda em frames alternados, com o dt
+     acumulado — o verlet do three-vrm aceita passo variável. */
+  sincronizarUm:function(d, dt, reduce, mobile){
+    if (!d.pares) return;
+    for (var i=0;i<d.pares.length;i++){
+      var a = d.pares[i][0], b = d.pares[i][1];
+      b.position.copy(a.position);
+      b.quaternion.copy(a.quaternion);
+      b.scale.copy(a.scale);
+    }
+    if (dt <= 0 || !d.vrm) return;
+    if (d.vrm === this.fonte("face") && d.vrm.blendShapeProxy) d.vrm.blendShapeProxy.update();
+    if (reduce || d.vrm !== this.fonte("hair") || !d.vrm.springBoneManager) return;
+    d.acc = (d.acc || 0) + dt;
+    if (mobile && !(d.flip = !d.flip)) return;
+    d.vrm.springBoneManager.lateUpdate(d.acc);
+    d.acc = 0;
+  },
+
+  sincronizar:function(dt, reduce){
+    var id;
+    for (id in this.doadores) this.sincronizarUm(this.doadores[id], dt, reduce, MOBILE);
+  }
+};
+
+/* Mostra/esconde as malhas de um VRM por peça. `mapa` null = mostra tudo (é o
+   estado de um modelo que voltou a ser o personagem principal).
+   A peça escondida sai do grafo em vez de receber visible=false: um VRoid tem
+   de 46 a 118 primitivas por modelo, e deixá-las penduradas custa caro em
+   updateMatrixWorld e na varredura de render mesmo invisíveis (medido: 59 fps
+   contra 32 fps com três doadores). Sair do grafo não descarta nada — o nó
+   guarda o pai de origem e volta inteiro quando a peça é escolhida de novo. */
+function mostrarMalhas(vrm, mapa){
+  if (!vrm || !vrm._malhas) return;
+  PECAS.forEach(function(p){
+    var lista = vrm._malhas[p.k];
+    if (!lista) return;
+    var v = mapa ? !!mapa[p.k] : true;
+    lista.forEach(function(o){
+      if (v){ if (!o.parent && o._pai) o._pai.add(o); o.visible = true; }
+      else if (o.parent) o.parent.remove(o);
+    });
+  });
+}
 
 /* -------------------------------------------------------------------------
    5. STUDIO — cena, luzes, plataforma e câmera orbital
@@ -1378,11 +1816,19 @@ var UI = {
       }
     };
 
+    /* o transplante tem seu próprio "carregando": o personagem já está em
+       cena, só as peças emprestadas é que ainda estão vindo */
+    Transplante.onstate = function(state){
+      var st=$("#castStatus"), c=CAST[CFG.character];
+      st.textContent = state==="loading" ? "MONTANDO PEÇAS…" : (c.label+" — "+c.classe);
+    };
+
     $("#rand").addEventListener("click", function(){ self.randomize(); });
     $("#reset").addEventListener("click", function(){
       var keep = CFG.character;
       CFG = Object.assign({}, DEFAULT_CFG); CFG.character = keep;
-      VRMAvatar.applyAll(); self.refresh(); self.dirty = true;
+      Transplante.remontar();          /* devolve as peças emprestadas */
+      VRMAvatar.applyAll(); self.renderRows(); self.refresh(); self.dirty = true;
       toast("APARÊNCIA RESTAURADA");
     });
     $("#saveAvatar").addEventListener("click", function(){ MemCard.saveAvatar(); });
@@ -1425,6 +1871,24 @@ var UI = {
       }));
     });
 
+    /* origem de cada peça — "PRÓPRIO" ou o personagem de quem ela é
+       emprestada. Fica sempre visível, inclusive para peças que o
+       personagem base não tem (a Victoria só ganha calça assim). */
+    PECAS.forEach(function(p){
+      self.rows.push(self.row(box, p.label+" DE", {
+        classe:"org",
+        get:function(){ return (CFG["de_"+p.k]|0) + 1; },
+        len:function(){ return CAST.length + 1; },
+        set:function(v){
+          Transplante.definir(p.k, v - 1, function(){ UI.renderRows(); });
+        },
+        text:function(){
+          var i = CFG["de_"+p.k];
+          return (i == null || i < 0) ? "PRÓPRIO" : CAST[i].label;
+        }
+      }));
+    });
+
     self.rows.push(self.row(box, "EXPRESSÃO", {
       get:function(){ return CFG.expr|0; },
       len:function(){ return EXPR.length; },
@@ -1443,7 +1907,7 @@ var UI = {
   },
 
   row:function(parent, name, spec){
-    var el=document.createElement("div"); el.className="row";
+    var el=document.createElement("div"); el.className="row"+(spec.classe?" "+spec.classe:"");
     var nm=document.createElement("span"); nm.className="rn"; nm.textContent=name;
 
     var prev=document.createElement("button"); prev.className="arw"; prev.type="button";
@@ -1499,7 +1963,16 @@ var UI = {
     CFG.expr   = Math.random()<0.5 ? 0 : Math.floor(Math.random()*EXPR.length);
     CFG.height = Math.round(Math.random()*10)/10;
     CFG.build  = Math.round((0.2+Math.random()*0.6)*10)/10;
+    /* mistura peças de outros personagens em uma parte das vezes; no máximo
+       dois doadores, para não transformar cada sorteio em três downloads */
+    var self = this, sorteados = 0;
+    PECAS.forEach(function(p){
+      var pega = sorteados < 2 && Math.random() < 0.3;
+      CFG["de_"+p.k] = pega ? Math.floor(Math.random()*CAST.length) : -1;
+      if (pega) sorteados++;
+    });
     VRMAvatar.applyAll();
+    Transplante.garantir(function(){ self.renderRows(); Studio.fit(); });
     Studio.fit();
     this.refresh();
     this.dirty = true;
@@ -1516,11 +1989,20 @@ var MemCard = {
   payload:function(){
     /* estrutura salva — pronta para associar a um convidado (§14) */
     return {
-      v:3, guestId:GUEST, name:(Store.get(KEY_RS)||{}).name || null,
+      v:4, guestId:GUEST, name:(Store.get(KEY_RS)||{}).name || null,
       avatar:{
         character: CAST[CFG.character].id,
         hair:CFG.hair, tops:CFG.tops, bottom:CFG.bottom, shoes:CFG.shoes, neck:CFG.neck,
-        eyes:CFG.eyes, skin:CFG.skin, height:CFG.height, build:CFG.build, expr:CFG.expr
+        eyes:CFG.eyes, skin:CFG.skin, height:CFG.height, build:CFG.build, expr:CFG.expr,
+        /* origem de cada peça, por id de personagem (null = do próprio) */
+        pecas:(function(){
+          var o = {};
+          PECAS.forEach(function(p){
+            var i = CFG["de_"+p.k];
+            o[p.k] = (i == null || i < 0) ? null : CAST[i].id;
+          });
+          return o;
+        })()
       },
       savedAt:new Date().toISOString()
     };
@@ -1537,6 +2019,12 @@ var MemCard = {
     var k;
     for (k in d.avatar) if (k in CFG && k !== "character") CFG[k] = d.avatar[k];
     CFG.character = castIndexById(d.avatar.character);
+    /* saves da v3 não têm peças transplantadas — o padrão -1 já cobre isso */
+    var pecas = d.avatar.pecas || {};
+    PECAS.forEach(function(p){
+      var id = pecas[p.k];
+      CFG["de_"+p.k] = id ? castIndexById(id) : -1;
+    });
     return true;
   },
 
@@ -1835,7 +2323,9 @@ var Flow = {
      de fora (ex.: PS2CONVITE.set("citrine") ou PS2CONVITE.Studio.cam) */
   window.PS2CONVITE = {
     Studio:Studio, Avatar:VRMAvatar, UI:UI, Flow:Flow, MemCard:MemCard,
-    CFG:CFG, CAST:CAST, PARTS:PARTS, PAL:PAL,
+    Transplante:Transplante,
+    CFG:CFG, CAST:CAST, PARTS:PARTS, PECAS:PECAS, PAL:PAL,
+    peca:function(k, id){ Transplante.definir(k, id==null?-1:castIndexById(id), function(){ UI.renderRows(); }); },
     set:function(id){ UI.pick(typeof id==="number" ? id : castIndexById(id)); },
     tint:function(part,i){ CFG[part]=i; VRMAvatar.applyColors(); UI.refresh(); }
   };
